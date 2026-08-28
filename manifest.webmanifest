@@ -1,0 +1,12 @@
+{
+  "name":"IRIS 短影音工作室",
+  "short_name":"IRIS",
+  "start_url":".",
+  "scope":".",
+  "display":"standalone",
+  "background_color":"#0d1024",
+  "theme_color":"#0d1024",
+  "lang":"zh-Hant",
+  "orientation":"any",
+  "icons":[{"src":"./icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+}
