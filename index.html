@@ -826,6 +826,18 @@ body.script-diff .script-cell.changed{box-shadow:inset 2px 0 0 var(--copper);pad
 .lookalike-head{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:flex-start}
 .lookalike-head h3{margin:2px 0 4px}
 .lookalike-status{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.lookalike-reference{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:9px}
+.lookalike-reference label{margin:0;color:var(--muted);font-size:11.5px}
+.lookalike-reference input{flex:1;min-width:220px;min-height:34px;margin:0;background:#101214;border:1px solid var(--line2);border-radius:6px;color:var(--text);font-size:12px;padding:0 9px}
+.lookalike-reference .hint{flex-basis:100%;margin:0}
+.lookalike-plans{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:12px}
+.lookalike-plan{border:1px solid var(--line);border-radius:9px;padding:11px;min-width:0}
+.lookalike-plan label{display:block;margin:0 0 7px}
+.lookalike-plan label small{display:block;color:var(--muted);font-size:10.5px;margin-top:2px;line-height:1.6}
+.lookalike-plan select{width:100%;min-height:34px;margin:0;background:#101214;border:1px solid var(--line2);border-radius:6px;color:var(--text);font-size:12px;padding:0 7px}
+.lookalike-plan .hint{margin:7px 0 0;font-size:10.5px;line-height:1.65}
+@media(max-width:1100px){.lookalike-plans{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.lookalike-plans{grid-template-columns:1fr}}
 .lookalike-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:14px}
 .lookalike-col{border:1px solid var(--line);border-radius:9px;padding:12px;min-width:0}
 .lookalike-col h4{margin:0 0 4px;font-size:13px}
@@ -2356,6 +2368,14 @@ body.home-screen header h1.brand-mark b{font-size:18px}
             <div class="lookalike-status"><span class="status-line" id="lookalike-state"></span>
               <button class="btn small ghost" type="button" id="btn-lookalike-exit">退出拍同款</button></div>
           </div>
+          <div class="lookalike-reference">
+            <label for="lookalike-source">參考影片</label>
+            <input type="text" id="lookalike-source" placeholder="貼上參考影片連結或名稱">
+            <button class="btn small ghost" type="button" id="btn-lookalike-register">登錄參考來源</button>
+            <span class="status-line" id="lookalike-source-state"></span>
+            <p class="hint">只登錄識別資訊與結構分析結果；不下載、不保存、不重製原片畫面、聲音或文字。</p>
+          </div>
+          <div class="lookalike-plans" id="lookalike-plans"></div>
           <div class="lookalike-grid">
             <div class="lookalike-col">
               <h4>沿用 / 重寫</h4>
@@ -2953,6 +2973,43 @@ const I18N_PHRASES=Object.assign(Object.create(null),{
   "全球結構參考": "Global structure reference",
   "段落來源": "Segment sources",
   "拍同款": "Lookalike",
+  "參考影片": "Reference video",
+  "登錄參考來源": "Register the source",
+  "尚未登錄參考來源": "No source registered yet",
+  "已登錄，僅保存識別資訊": "Registered; only the identifier is kept",
+  "尚未登錄參考來源。": "The reference source has not been registered.",
+  "請先填入參考影片連結或名稱。": "Enter the reference video link or name first.",
+  "只登錄識別資訊與結構分析結果；不下載、不保存、不重製原片畫面、聲音或文字。": "Only the identifier and the structure analysis are kept; the source video, its audio and its wording are never downloaded, stored or reproduced.",
+  "人物替換": "Person replacement",
+  "原片人物一律不沿用。": "The source's people are never reused.",
+  "不出現人物": "No people on screen",
+  "以產品、場景與文字承載敘事。": "Product, place and words carry the story.",
+  "本店人員出鏡": "Own staff on camera",
+  "需本人同意，並登錄肖像授權。": "Needs their own consent and a recorded likeness right.",
+  "顧客出鏡（已授權）": "Customer on camera (authorised)",
+  "需顧客本人同意，且可隨時撤回。": "Needs the customer's own consent, withdrawable at any time.",
+  "合作模特（已簽約）": "Contracted model",
+  "需契約或授權證明。": "Needs the contract or a licence.",
+  "場景替換": "Scene replacement",
+  "原片場地不沿用；重拍或使用可授權場地。": "The source's venue is not reused; reshoot or use a venue you may license.",
+  "本店實景": "Own premises",
+  "自有場地，無需第三方授權。": "Your own place; no third-party licence needed.",
+  "授權場地": "Licensed venue",
+  "需場地方書面同意。": "Needs the venue owner's written consent.",
+  "中性背景／棚拍": "Neutral backdrop or studio",
+  "不指向任何可辨識場所。": "Points at no identifiable place.",
+  "不使用音樂": "No music",
+  "以環境音與旁白為主。": "Ambient sound and voice-over carry it.",
+  "授權音樂庫": "Licensed music library",
+  "需保留授權編號與範圍。": "Keep the licence number and its scope.",
+  "自有或委製音樂": "Own or commissioned music",
+  "需自有或委製證明。": "Needs proof of ownership or commission.",
+  "動作與運鏡": "Motion and camera",
+  "節奏可沿用，逐格動作不可。": "Pacing may be kept; frame-by-frame motion may not.",
+  "沿用節奏、重新編排動作": "Keep the pacing, rearrange the motion",
+  "段落長度相近，動作自行設計。": "Similar segment lengths, motion of your own design.",
+  "完全重新設計": "Redesign it entirely",
+  "連節奏也重寫，距離原片最遠。": "Rewrites the pacing too; furthest from the source.",
   "未成年監護人": "Guardian of a minor",
   "肖像": "Likeness",
   "場地": "Venue",
@@ -9383,6 +9440,44 @@ const LOOKALIKE_REWRITE=[
   {id:"music",label:"音樂與音效",why:"音樂需要各自授權。"},
   {id:"people",label:"人物與品牌識別",why:"肖像與商標不得沿用。"}
 ];
+const LOOKALIKE_PLANS={
+  person:{
+    label:"人物替換",
+    hint:"原片人物一律不沿用。",
+    options:[
+      {id:"none",label:"不出現人物",requires:null,note:"以產品、場景與文字承載敘事。"},
+      {id:"staff",label:"本店人員出鏡",requires:"person",note:"需本人同意，並登錄肖像授權。"},
+      {id:"customer",label:"顧客出鏡（已授權）",requires:"person",note:"需顧客本人同意，且可隨時撤回。"},
+      {id:"model",label:"合作模特（已簽約）",requires:"person",note:"需契約或授權證明。"}
+    ]
+  },
+  scene:{
+    label:"場景替換",
+    hint:"原片場地不沿用；重拍或使用可授權場地。",
+    options:[
+      {id:"own",label:"本店實景",requires:null,note:"自有場地，無需第三方授權。"},
+      {id:"licensed",label:"授權場地",requires:"scene",note:"需場地方書面同意。"},
+      {id:"neutral",label:"中性背景／棚拍",requires:null,note:"不指向任何可辨識場所。"}
+    ]
+  },
+  music:{
+    label:"音樂",
+    hint:"原片音樂一律不沿用。",
+    options:[
+      {id:"none",label:"不使用音樂",requires:null,note:"以環境音與旁白為主。"},
+      {id:"library",label:"授權音樂庫",requires:"music",note:"需保留授權編號與範圍。"},
+      {id:"original",label:"自有或委製音樂",requires:"music",note:"需自有或委製證明。"}
+    ]
+  },
+  motion:{
+    label:"動作與運鏡",
+    hint:"節奏可沿用，逐格動作不可。",
+    options:[
+      {id:"rearranged",label:"沿用節奏、重新編排動作",requires:null,note:"段落長度相近，動作自行設計。"},
+      {id:"original",label:"完全重新設計",requires:null,note:"連節奏也重寫，距離原片最遠。"}
+    ]
+  }
+};
 const LOOKALIKE_RISKS=[
   "不得逐像素複製、換臉或重建原片人物。",
   "不得使用未成年人肖像；如涉及未成年人，需監護人同意且可撤回。",
@@ -9400,7 +9495,9 @@ const LOOKALIKE_RIGHT_STATES=[
   {id:"licensed",label:"已授權"},{id:"owned",label:"自有"},{id:"refused",label:"已拒絕"}
 ];
 state.lookalike={
-  enabled:false,source:"",ceiling:0.65,measured:null,status:"draft",
+  enabled:false,source:"",sourceRegistered:false,
+  plans:{person:"none",scene:"own",music:"none",motion:"rearranged"},
+  ceiling:0.65,measured:null,status:"draft",
   keep:LOOKALIKE_KEEPABLE.map(item=>item.id),
   rewrite:LOOKALIKE_REWRITE.map(item=>item.id),
   rights:[],consents:[],provenance:[],gateNote:""
@@ -9448,6 +9545,13 @@ function lookalikeBlockers(){
     if(right.minor&&!la.consents.some(c=>c.type==="minor_guardian"&&c.rightId===right.id&&!c.withdrawnAt))
       out.push("涉及未成年人須有仍然有效的監護人同意。");
   }
+  if(!la.sourceRegistered)out.push("尚未登錄參考來源。");
+  for(const [key,plan] of Object.entries(LOOKALIKE_PLANS)){
+    const chosen=plan.options.find(option=>option.id===la.plans[key]);
+    if(!chosen||!chosen.requires)continue;
+    const met=la.rights.some(right=>right.subjectType===chosen.requires&&(right.status==="licensed"||right.status==="owned"));
+    if(!met)out.push(`${plan.label}選擇「${chosen.label}」，需先取得「${LOOKALIKE_SUBJECTS.find(sub=>sub.id===chosen.requires)?.label||chosen.requires}」授權。`);
+  }
   if(la.consents.some(c=>c.withdrawnAt))out.push("有同意已被撤回，需重新取得後才能繼續。");
   if(la.measured===null)out.push("尚未量測相似度。");
   else if(la.measured>la.ceiling)out.push(`相似度 ${la.measured.toFixed(2)} 高於上限 ${la.ceiling.toFixed(2)}，需再改寫。`);
@@ -9471,6 +9575,7 @@ function lookalikeEnable(source){
   const la=state.lookalike;
   la.enabled=true;
   la.source=source||la.source||"";
+  la.sourceRegistered=!!la.source;
   la.status="rights_pending";
   if(!la.provenance.length){
     lookalikeAppend("source_registered",{source:la.source,note:"僅登錄來源識別，不下載、不重製原片內容。"});
@@ -9498,6 +9603,17 @@ function renderLookalike(){
   if(host&&panel.parentElement!==host)host.appendChild(panel);
   const la=state.lookalike;
   $("#lookalike-summary").textContent=la.source?`參考來源：${la.source}`:"參考來源：未登錄";
+  const sourceField=$("#lookalike-source");
+  if(document.activeElement!==sourceField)sourceField.value=la.source||"";
+  $("#lookalike-source-state").textContent=la.sourceRegistered?"已登錄，僅保存識別資訊":"尚未登錄參考來源";
+  $("#lookalike-source-state").className="status-line "+(la.sourceRegistered?"ok":"err");
+  $("#lookalike-plans").innerHTML=Object.entries(LOOKALIKE_PLANS).map(([key,plan])=>{
+    const chosen=plan.options.find(option=>option.id===la.plans[key])||plan.options[0];
+    return `<div class="lookalike-plan"><label for="lookalike-plan-${key}"><b>${escapeHtml(plan.label)}</b><small>${escapeHtml(plan.hint)}</small></label>`
+      +`<select id="lookalike-plan-${key}" data-lookalike-plan="${key}">`
+      +plan.options.map(option=>`<option value="${option.id}" ${option.id===chosen.id?"selected":""}>${escapeHtml(option.label)}</option>`).join("")
+      +`</select><p class="hint">${escapeHtml(chosen.note)}${chosen.requires?`（需要「${escapeHtml(LOOKALIKE_SUBJECTS.find(sub=>sub.id===chosen.requires)?.label||chosen.requires)}」授權）`:""}</p></div>`;
+  }).join("");
   $("#lookalike-state").textContent=`狀態：${la.status==="ready"?"可繼續":"SECURITY_LOCKED：僅本機記錄，未送出任何內容"}`;
 
   $("#lookalike-lists").innerHTML=
@@ -9586,6 +9702,14 @@ function installLookalikeControls(){
         lookalikeAppend("rights_recorded",{subjectType:right.subjectType,subjectRef:right.subjectRef,status:right.status,minor:!!right.minor,publicFigure:!!right.publicFigure});
       }
     }
+    const plan=t.dataset.lookalikePlan;
+    if(plan){
+      la.plans[plan]=t.value;
+      const chosen=LOOKALIKE_PLANS[plan].options.find(option=>option.id===t.value);
+      lookalikeAppend("risk_warned",{plan,choice:t.value,requires:chosen?chosen.requires:null});
+      la.measured=null;
+    }
+    if(t.id==="lookalike-source"){ la.source=t.value.trim(); la.sourceRegistered=false; }
     if(t.id==="lookalike-ceiling"){
       la.ceiling=Number(t.value);
       lookalikeAppend("similarity_measured",{ceiling:la.ceiling,measured:la.measured});
@@ -9632,6 +9756,19 @@ function installLookalikeControls(){
       grantedBy:who,grantedAt:new Date().toISOString().slice(0,19).replace("T"," "),withdrawnAt:null
     });
     lookalikeAppend("consent_recorded",{type,grantedBy:who,statement});
+    renderLookalike();
+  });
+  $("#btn-lookalike-register").addEventListener("click",()=>{
+    const la=state.lookalike;
+    const value=$("#lookalike-source").value.trim();
+    if(!value){
+      la.sourceRegistered=false;
+      $("#lookalike-source-state").textContent="請先填入參考影片連結或名稱。";
+      $("#lookalike-source-state").className="status-line err";
+      return;
+    }
+    la.source=value;la.sourceRegistered=true;
+    lookalikeAppend("source_registered",{source:value,note:"僅登錄來源識別，不下載、不重製原片內容。"});
     renderLookalike();
   });
   $("#btn-lookalike-measure").addEventListener("click",()=>{ lookalikeMeasure(); renderLookalike(); });
