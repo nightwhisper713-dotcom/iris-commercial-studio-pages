@@ -1812,7 +1812,7 @@ body.home-screen header h1.brand-mark b{font-size:18px}
   <div id="left">
     <header>
       <h1 class="brand-mark"><b>IRIS</b><span data-i18n="app.product">商業影音工作室</span></h1>
-      <div class="header-actions"><button class="btn small ghost" id="btn-locale" type="button">繁中｜EN</button><button class="btn small ghost icon-btn" id="btn-settings" type="button" title="連線設定" aria-label="連線設定"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-settings"></use></svg></button><button class="btn small ghost" id="btn-projects" type="button" data-i18n="nav.projects">專案管理</button></div>
+      <div class="header-actions"><button class="btn small ghost" id="btn-locale" type="button">繁中｜EN</button><button class="btn small ghost icon-btn" id="btn-settings" type="button" title="連線設定" aria-label="連線設定"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-settings"></use></svg></button><button class="btn small ghost" id="btn-projects" type="button" data-i18n="nav.projects">專案管理</button><button class="btn small ghost" id="btn-account" type="button" aria-haspopup="dialog">登入</button></div>
       <div id="steps" role="navigation" aria-label="製作流程">
         <button class="step-btn active" data-step="1" data-i18n="step.brand">1 品牌與產業</button>
         <button class="step-btn" data-step="2" data-i18n="step.trends">2 趨勢探索</button>
@@ -2613,6 +2613,28 @@ body.home-screen header h1.brand-mark b{font-size:18px}
   </div>
 </div>
 
+<div class="modal-bg" id="auth-modal-bg">
+  <div class="modal auth-modal" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+    <h3 id="auth-title">登入 IRIS</h3>
+    <p class="hint" id="auth-intro">輸入 Email，我們會寄出登入連結與六位數驗證碼。不需要密碼。</p>
+    <label for="auth-email">Email</label>
+    <input type="email" id="auth-email" autocomplete="email" placeholder="you@example.com">
+    <div class="row" style="gap:8px;margin-top:10px">
+      <button class="btn teal" type="button" id="btn-auth-send">寄出登入連結</button>
+      <button class="btn ghost" type="button" id="btn-auth-close">稍後再說</button>
+    </div>
+    <div id="auth-code-row" class="hidden" style="margin-top:12px">
+      <label for="auth-code">驗證碼</label>
+      <input type="text" id="auth-code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="8 位數字">
+      <button class="btn" type="button" id="btn-auth-verify" style="margin-top:8px">驗證並登入</button>
+    </div>
+    <p class="status-line" id="auth-status" role="status" aria-live="polite"></p>
+    <div id="auth-signed-in" class="hidden">
+      <p class="status-line ok" id="auth-who"></p>
+      <button class="btn ghost" type="button" id="btn-auth-signout">登出</button>
+    </div>
+  </div>
+</div>
 <div class="modal-bg" id="settings-modal-bg">
   <div class="modal" style="width:780px;max-height:88vh;overflow-y:auto;padding:20px">
     <div class="row" style="justify-content:space-between;margin-bottom:10px">
@@ -2973,6 +2995,63 @@ const I18N_PHRASES=Object.assign(Object.create(null),{
   "全球結構參考": "Global structure reference",
   "段落來源": "Segment sources",
   "拍同款": "Lookalike",
+  "這個版本尚未連線到專案；所有動作都在本機完成，不會送出任何內容。": "This build is not connected to a project; everything happens on this device and nothing is sent.",
+  "登入後才能使用雲端分析、趨勢搜尋與正式製作。": "Sign in to use cloud analysis, trend search and production.",
+  "已登入：{}": "Signed in: {}",
+  "這個版本尚未連線到專案。所有動作都在本機完成,不會送出任何內容。": "This build is not connected to a project. Everything happens on this device and nothing is sent.",
+  "尾牙春酒": "Year-end company parties",
+  "過年前大掃除": "Pre-new-year deep clean",
+  "農曆年前備貨": "Lunar new year stock-up",
+  "開工大吉": "Back to business",
+  "元宵節": "Lantern Festival",
+  "{} 連假": "{} long weekend",
+  "春季換季": "Spring changeover",
+  "母親節前預備": "Getting ready for Mother's Day",
+  "清明連假": "Tomb Sweeping long weekend",
+  "清明掃墓": "Tomb Sweeping Day",
+  "春末旅遊": "Late-spring travel",
+  "四月報稅季": "April tax season",
+  "母親節檔期": "Mother's Day season",
+  "畢業季前哨": "Run-up to graduation",
+  "梅雨季": "Plum rain season",
+  "端午節": "Dragon Boat Festival",
+  "畢業季": "Graduation season",
+  "暑假開跑": "Summer holidays begin",
+  "暑假旺季": "Peak summer season",
+  "颱風季": "Typhoon season",
+  "七月半前": "Before Ghost Month",
+  "中元節普渡": "Ghost Festival offerings",
+  "開學季": "Back to school",
+  "父親節": "Father's Day",
+  "中秋節烤肉": "Mid-Autumn barbecue",
+  "開學進行式": "Back-to-school in full swing",
+  "秋季換季": "Autumn changeover",
+  "雙十連假": "National Day long weekend",
+  "萬聖節": "Halloween",
+  "雙{} 前哨": "Run-up to Double {}",
+  "雙{} 購物節": "Double {} shopping festival",
+  "進補季": "Winter tonic season",
+  "年末衝刺": "Year-end push",
+  "聖誕節": "Christmas",
+  "跨年": "New Year's Eve",
+  "年終回顧": "Year in review",
+  "登入 IRIS": "Sign in to IRIS",
+  "登入": "Sign in",
+  "登出": "Sign out",
+  "離線試用": "Offline trial",
+  "已登入": "Signed in",
+  "輸入 Email，我們會寄出登入連結與六位數驗證碼。不需要密碼。": "Enter your email and we will send a sign-in link and a six-digit code. No password needed.",
+  "寄出登入連結": "Send the sign-in link",
+  "稍後再說": "Not now",
+  "驗證碼": "Verification code",
+  "驗證並登入": "Verify and sign in",
+  "{} 位數字": "{} digits",
+  "正在寄出…": "Sending…",
+  "驗證中…": "Verifying…",
+  "已登入。": "You are signed in.",
+  "已登出。": "You are signed out.",
+  "這個版本尚未連線到專案,無法登入。": "This build is not connected to a project, so sign-in is unavailable.",
+  "請輸入有效的 Email。": "Enter a valid email address.",
   "參考影片": "Reference video",
   "貼上參考影片連結或名稱": "Paste a reference video link or name",
   "登錄參考來源": "Register the source",
@@ -9673,6 +9752,87 @@ function renderLookalike(){
   la.status=blockers.length?"rights_pending":"security_locked";
 }
 
+function irisAuthAvailable(){ return !!(window.IRIS_SUPABASE && window.IRIS_SUPABASE.configured && window.IRIS_SUPABASE.configured()); }
+
+function renderAccount(){
+  const button=document.getElementById("btn-account");
+  if(!button)return;
+  const user=irisAuthAvailable()?window.IRIS_SUPABASE.user():null;
+  if(!irisAuthAvailable()){
+    button.textContent="離線試用";
+    button.title="這個版本尚未連線到專案；所有動作都在本機完成，不會送出任何內容。";
+  }else if(user){
+    button.textContent=user.email?user.email.split("@")[0]:"已登入";
+    button.title=`已登入：${user.email||user.id}`;
+  }else{
+    button.textContent="登入";
+    button.title="登入後才能使用雲端分析、趨勢搜尋與正式製作。";
+  }
+  state.sessionAccessToken=null;
+  if(user&&window.IRIS_SUPABASE.accessToken){
+    window.IRIS_SUPABASE.accessToken().then(token=>{state.sessionAccessToken=token;}).catch(()=>{});
+  }
+  const signedIn=$("#auth-signed-in"),codeRow=$("#auth-code-row");
+  if(signedIn)signedIn.classList.toggle("hidden",!user);
+  if(user&&$("#auth-who"))$("#auth-who").textContent=`已登入：${user.email||user.id}`;
+  if(user&&codeRow)codeRow.classList.add("hidden");
+}
+
+function installAuthControls(){
+  const open=()=>{
+    if(!irisAuthAvailable()){
+      $("#auth-status").textContent="這個版本尚未連線到專案。所有動作都在本機完成,不會送出任何內容。";
+      $("#auth-status").className="status-line";
+    }
+    $("#auth-modal-bg").classList.add("show");
+    renderAccount();
+  };
+  const close=()=>$("#auth-modal-bg").classList.remove("show");
+  const say=(text,kind)=>{ const el=$("#auth-status"); el.textContent=text; el.className="status-line "+(kind||""); };
+
+  $("#btn-account").addEventListener("click",open);
+  $("#btn-auth-close").addEventListener("click",close);
+  $("#auth-modal-bg").addEventListener("click",event=>{ if(event.target.id==="auth-modal-bg")close(); });
+
+  $("#btn-auth-send").addEventListener("click",async()=>{
+    const email=$("#auth-email").value.trim();
+    const button=$("#btn-auth-send");
+    button.disabled=true; say("正在寄出…");
+    try{
+      const result=await window.IRIS_SUPABASE.signInWithEmail(email);
+      $("#auth-code-row").classList.remove("hidden");
+      say(`已寄到 ${email}。點連結,或輸入信中的六位數驗證碼。`,"ok");
+      void result;
+    }catch(error){
+      say(error.code==="SECURITY_LOCKED"
+        ?"這個版本尚未連線到專案,無法登入。"
+        :error.code==="INVALID_REQUEST"?"請輸入有效的 Email。":`寄送失敗:${error.message}`,"err");
+    }finally{ button.disabled=false; }
+  });
+
+  $("#btn-auth-verify").addEventListener("click",async()=>{
+    const button=$("#btn-auth-verify");
+    button.disabled=true; say("驗證中…");
+    try{
+      await window.IRIS_SUPABASE.verifyOtp($("#auth-email").value.trim(),$("#auth-code").value);
+      say("已登入。","ok");
+      renderAccount();
+      setTimeout(close,600);
+    }catch(error){
+      say(`驗證失敗:${error.message}`,"err");
+    }finally{ button.disabled=false; }
+  });
+
+  $("#btn-auth-signout").addEventListener("click",async()=>{
+    await window.IRIS_SUPABASE.signOut();
+    say("已登出。");
+    renderAccount();
+  });
+
+  if(window.IRIS_SUPABASE&&window.IRIS_SUPABASE.onChange)window.IRIS_SUPABASE.onChange(()=>renderAccount());
+  renderAccount();
+}
+
 function installLookalikeControls(){
   const panel=document.getElementById("lookalike-panel");
   if(!panel)return;
@@ -9817,6 +9977,7 @@ initPricingMock();
 measureFinalDelivery();
 installWorkspaceAdvanced();
 installLookalikeControls();
+installAuthControls();
 initAcceptanceMode();
 if("serviceWorker" in navigator && location.protocol!=="file:") navigator.serviceWorker.register(new URL("./sw.js",location.href)).catch(()=>{});
   $("#btn-approve").disabled = true; $("#btn-approve").title = "付費生成安全基線尚未完成";
