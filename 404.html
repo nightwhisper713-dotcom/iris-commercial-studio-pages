@@ -5000,12 +5000,13 @@ function validateCommercial(p, brand){
   });
   return bad;
 }
-$("#btn-rewrite").addEventListener("click", async ()=>{
+async function generateBrandScript(){
   if(!state.analysis){ $("#rw-status").textContent="✗ 請先完成步驟 2 拆解"; $("#rw-status").className="status-line err"; return; }
-  if(!state.styleKey){ $("#rw-status").textContent="✗ 請先選一個風格"; $("#rw-status").className="status-line err"; return; }
+  if(!state.styleKey){ state.styleKey="process"; try{ renderStyles(); }catch(e){} } /* 未選風格時預設「幕後過程」,客戶仍可改 */
   const targetSec = parseInt($("#len-tpl").value,10);
   const shotCount = LEN_SHOTS[targetSec];
-  $("#rw-status").textContent = "生成腳本中(含商業規則檢查)…"; $("#rw-status").className="status-line run";
+  try{ const adv=document.querySelector(".script-advanced"); if(adv)adv.open=true; $("#rw-status").scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){}
+  $("#rw-status").textContent = "生成腳本中(含商業規則檢查,約 30-90 秒)…"; $("#rw-status").className="status-line run";
   try{
     let p = null, violations = [];
     for(let round=1; round<=3; round++){
@@ -5056,9 +5057,10 @@ $("#btn-rewrite").addEventListener("click", async ()=>{
     }).catch(()=>{});
     state.burnCaptions = buildBurnCaptions();
     renderStoryboard(); syncScrub();
-    gotoStep(5);
+    gotoStep(4); /* 生成後停在步驟 4 審核;通過審核才前往素材 */
   }catch(e){ $("#rw-status").textContent = "✗ " + e.message; $("#rw-status").className="status-line err"; }
-});
+}
+$("#btn-rewrite").addEventListener("click", generateBrandScript);
 $("#btn-apply-script").addEventListener("click",()=>{
   try{
     const p = JSON.parse($("#script-json").value);
@@ -8870,6 +8872,9 @@ function renderStructureAnalysis(){
   if($("#btn-structure-clear-search"))$("#btn-structure-clear-search").addEventListener("click",()=>{structureQuery="";renderStructureAnalysis();});
   $("#btn-structure-add").addEventListener("click",()=>{
     if(!structurePicked.size){setStructureState("empty");return;}
+    if(window.IRIS_SUPABASE?.configured?.()&&window.IRIS_SUPABASE.user()&&state.analysis){
+      gotoStep(4); generateBrandScript(); return; /* 真實生成:以拆解結構為骨架寫原創腳本 */
+    }
     installScriptReview({segments:[...structurePicked].sort((a,b)=>a-b)});
     gotoStep(4);
   });
@@ -8908,7 +8913,12 @@ function renderStructureAnalysis(){
   $("#btn-structure-export").addEventListener("click",()=>{
     offerDownload(new Blob([JSON.stringify(structureSummary(),null,2)],{type:"application/json;charset=utf-8"}),"IRIS_structure_summary.json");
   });
-  $("#btn-structure-to-script").addEventListener("click",()=>{installScriptReview({segments:[...structurePicked].sort((a,b)=>a-b)});gotoStep(4);});
+  $("#btn-structure-to-script").addEventListener("click",()=>{
+    if(window.IRIS_SUPABASE?.configured?.()&&window.IRIS_SUPABASE.user()&&state.analysis){
+      gotoStep(4); generateBrandScript(); return; /* 真實生成 */
+    }
+    installScriptReview({segments:[...structurePicked].sort((a,b)=>a-b)});gotoStep(4);
+  });
   $("#btn-structure-lookalike").addEventListener("click",()=>{
     installScriptReview({segments:[...structurePicked].sort((a,b)=>a-b)});
     lookalikeEnable(structureSampleMeta().label||structureSampleMeta().id);
