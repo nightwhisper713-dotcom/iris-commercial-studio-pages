@@ -8433,6 +8433,8 @@ async function runCompareSelected(){
   if(!window.IRIS_SUPABASE?.configured?.()||!window.IRIS_SUPABASE.user()){ setTrendState(trendBanner("warn","alert","請先登入,拆解才會使用真實分析引擎。")); return; }
   compareRunning=true;
   const btn=$("#btn-compare-selected"); if(btn){btn.setAttribute("aria-busy","true");btn.disabled=true;}
+  const pickBtn=$("#btn-preview-pick"); if(pickBtn){pickBtn.disabled=true;pickBtn.querySelector||(0);pickBtn.setAttribute("aria-busy","true");}
+  try{ $("#trend-state")?.scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){}
   const total=live.length, EXPECT=12; /* 每支預估秒數(結構任務為文字分析,快很多) */
   let done=0, timer=null;
   const paint=(frac,label)=>{
@@ -8466,6 +8468,7 @@ async function runCompareSelected(){
   }finally{
     compareRunning=false;
     if(btn){btn.removeAttribute("aria-busy");btn.disabled=false;}
+    if(pickBtn){pickBtn.removeAttribute("aria-busy");pickBtn.disabled=false;}
   }
 }
 const TREND_NETWORK_CONTROLS=["#trend-search","#btn-global-ref","#btn-auto-competitors","#btn-scan-channels","#btn-parse-ref","#btn-tiktok-add","#btn-tiktok-login"];
