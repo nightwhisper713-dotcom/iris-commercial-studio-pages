@@ -4444,7 +4444,7 @@ async function logUsage(row){
   }catch(e){}
 }
 const INDUSTRY_KWS = [
-  { match:["車燈","汽車","大燈","魚眼"], kws:["車燈 改裝","大燈 修復","魚眼 大燈","車燈 霧化","驗車 燈光","汽車 改裝 台灣"], en:["headlight restoration","headlight upgrade LED","car light modification"] },
+  { match:["車燈","汽車","大燈","魚眼","照明"], kws:["車燈 改裝","大燈 修復","魚眼 大燈","車燈 霧化","驗車 燈光","汽車 改裝 台灣"], en:["headlight restoration","projector headlight retrofit","LED headlight upgrade","foggy headlight fix","headlight polishing","custom headlights build"] },
   { match:["健身","教練","運動"], kws:["健身 新手","減脂 增肌","上班族 運動","居家 訓練","健身房 台灣","體態 改變"], en:["gym transformation","home workout beginner","personal trainer tips"] },
   { match:["美甲","美睫","美髮","美業"], kws:["美甲 款式","光療 指甲","美睫 自然","髮型 改造","美甲師 日常"], en:["nail art tutorial","gel nails transformation","lash extensions"] },
   { match:["餐飲","小吃","餐廳","美食"], kws:["台灣 小吃","巷弄 美食","老闆 日常","餐廳 廚房","銅板 美食"], en:["street food vendor","restaurant kitchen behind the scenes","small food business"] },
@@ -7915,6 +7915,7 @@ function applyIndustry(entry,options){
   industryRemember(entry);
   for(const button of $$("#industry-picker button"))button.classList.toggle("active",button.dataset.industry===entry.zh);
   renderKwChips(entry.zh);
+  try{ renderGlobalKwChips(); }catch(e){} /* 產業一換,全球分頁的英文詞建議同步更新 */
   renderIndustryConsole();
   if(!options||options.suggest!==false)buildIndustrySuggestions(entry);
   homeStudioSync?.();
@@ -8170,7 +8171,9 @@ function mapTrendVideo(v,i,regionCode,language){
     summary:`真實資料:觀看 ${views==null?"—":views.toLocaleString()}・讚 ${likes==null?"—":likes.toLocaleString()}・${v.channelTitle||"—"}。缺少的數字表示平台未提供,不捏造。` };
 }
 function trendQueryFor(mode){
-  const industryText=String(state.brand?.industry||"")+" "+($("#trend-kw")?.value||"");
+  const industryText=[state.brand?.industryZh,state.brand?.industry,
+    document.querySelector("#industry-picker button.active")?.dataset.industry,
+    $("#industry-search")?.value,$("#trend-kw")?.value].filter(Boolean).join(" ");
   const hit=INDUSTRY_KWS.find(g=>g.match.some(m=>industryText.includes(m)));
   if(mode==="global"){
     const manual=$("#global-industry")?.value.trim();
@@ -8189,11 +8192,16 @@ function renderGlobalKwChips(){
   const input=$("#global-industry");if(!input)return;
   let box=$("#global-kw-chips");
   if(!box){ box=document.createElement("div"); box.id="global-kw-chips"; box.style.cssText="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"; input.closest(".trend-field")?.parentNode?.insertBefore(box,input.closest(".trend-field").nextSibling); }
-  const industryText=String(state.brand?.industry||"");
+  const industryText=[state.brand?.industryZh,state.brand?.industry,
+    document.querySelector("#industry-picker button.active")?.dataset.industry,
+    $("#industry-search")?.value,$("#trend-kw")?.value].filter(Boolean).join(" ");
   const hit=INDUSTRY_KWS.find(g=>g.match.some(m=>industryText.includes(m)));
-  const kws=hit?.en||INDUSTRY_KWS.flatMap(g=>g.en.slice(0,1)).slice(0,6);
-  box.innerHTML=(hit?`<span class="hint" style="margin:0;width:100%">依你的產業「${escapeHtml(industryText)}」建議:</span>`:`<span class="hint" style="margin:0;width:100%">常用英文產業詞(點一下帶入):</span>`)
-    +kws.map(k=>`<button type="button" class="chip" data-gkw="${escapeHtml(k)}" style="cursor:pointer">${escapeHtml(k)}</button>`).join("");
+  if(hit){
+    box.innerHTML=`<span class="hint" style="margin:0;width:100%">依你的產業建議(點一下帶入):</span>`
+      +hit.en.map(k=>`<button type="button" class="chip" data-gkw="${escapeHtml(k)}" style="cursor:pointer">${escapeHtml(k)}</button>`).join("");
+  }else{
+    box.innerHTML=`<span class="hint" style="margin:0;width:100%">先在步驟 1 選好產業,這裡會給對應的英文詞;也可以直接輸入。</span>`;
+  }
   box.querySelectorAll("[data-gkw]").forEach(b=>b.addEventListener("click",()=>{ input.value=b.dataset.gkw; input.focus(); }));
 }
 function trendMode(){return document.body.dataset.trendMode||"keyword";}
