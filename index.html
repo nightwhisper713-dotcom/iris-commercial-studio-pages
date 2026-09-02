@@ -5181,6 +5181,7 @@ function adoptScriptVersion(idx){
     : `版本 ${idx+1} ✓ 通過商業檢查|hook:${p.hook_type||"?"}|公式:${p.formula||"?"}|暗號:「${p.cta_code||"?"}」`;
   $("#rw-status").className=v.length?"status-line err":"status-line ok";
   try{ installScriptReview({keepProject:true,riskDemo:false}); }catch(e){}
+  try{ for(const pill of $$("#script-versions button"))pill.classList.toggle("active",Number(pill.dataset.scriptVersion)===idx); }catch(e){}
   return true;
 }
 async function generateBrandScript(){
