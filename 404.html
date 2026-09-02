@@ -330,6 +330,7 @@ body.review-demo #panel-4>h2,body.review-demo #panel-4>.lock-card,body.review-de
 .preview-cta-field>div:focus-within{border-color:#c9824a}
 @keyframes an-rotate{to{transform:rotate(360deg)}}
 .an-spin{animation:an-rotate 1s linear infinite;transform-origin:center}
+body.trend-screen:not(.structure-demo) #an-result-card{display:none!important}
 .is-card .is-sync{background:#0a0c0d;border:1px solid #313436;border-radius:7px;min-height:38px;padding:0 10px;color:#e6e0d8;caret-color:#e8a763}
 .is-card .is-sync:focus{border-color:#c9824a;outline:none}.preview-primary,.project-cta{border:0;border-radius:5px;background:linear-gradient(180deg,#d99a64,#b86f3f);color:#fff;box-shadow:0 7px 20px rgba(194,116,62,.23);cursor:pointer}.preview-primary{width:100%;margin-top:18px;min-height:60px;font-size:18px;font-weight:700;display:flex;justify-content:center;align-items:center;gap:60px}.ratio-picker{position:absolute;z-index:2;right:18px;bottom:14px;display:flex;gap:4px;background:rgba(13,14,15,.85);border:1px solid #323436;border-radius:7px;padding:5px}.ratio-picker label{padding:7px 10px;font-size:12px;color:#ddd}.ratio-picker input{accent-color:#cf8650}.home-assets,.home-voice{padding:16px 20px}.home-assets{grid-column:span 6}.home-voice{grid-column:span 6}.surface-title{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:13px}.surface-title h3{margin:0 0 3px;font:600 16px/1.2 Georgia,"Noto Serif TC",serif}.surface-title small,.surface-title span{color:#9b9a96;font-size:11px}.asset-layout{display:grid;grid-template-columns:1.2fr .8fr .85fr;gap:12px}.drop-zone,.shot-guide,.asset-example{border:1px solid #383a3c;border-radius:6px;min-height:128px;padding:14px;background:#0f1113}.drop-zone{border-style:dashed;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;text-align:center}.drop-zone .upload-icon{font-size:29px;color:#92979a}.drop-zone small,.drop-zone em,.asset-example small{display:block;color:#858789;font-size:10px;margin-top:6px;font-style:normal}.shot-guide ul{margin:10px 0 0;padding-left:18px;color:#a8a7a3;font-size:11px;line-height:1.9}.asset-example{display:flex;flex-direction:column;align-items:center;justify-content:center;color:#8c8e90}.asset-example span{font-size:30px}.privacy-line{display:flex;justify-content:space-between;color:#979694;font-size:10px;margin:12px 0 0}.visually-hidden{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important}.voice-console{position:relative;border:1px solid #343739;border-radius:7px;padding:18px 105px 52px 18px;min-height:128px;background:#0d0f10}.voice-status{font-size:11px;color:#aaa}.voice-status>span{display:inline-block;width:8px;height:8px;border-radius:50%;background:#c78349;margin-right:8px}.voice-timer{position:absolute;top:18px;left:42%;font-variant-numeric:tabular-nums}.voice-timer strong{font:500 23px/1 Georgia,serif}.voice-timer small{color:#777}.waveform{color:#d68b4b;letter-spacing:2px;margin-top:35px;white-space:nowrap;overflow:hidden}.record-orb{position:absolute;right:28px;top:35px;width:62px;height:62px;border-radius:50%;border:2px solid #dc9558;background:#17191a;color:white;box-shadow:0 0 0 6px rgba(216,149,88,.08),0 0 28px rgba(216,149,88,.25);cursor:pointer}.voice-actions{position:absolute;left:14px;right:14px;bottom:10px;display:flex;gap:10px}.home-voice>.consent-line{font-size:10px;margin-top:10px;color:#999}/* the closing action of the brand page, kept in reach the same way the script
    and timeline pages keep theirs: the form above it is taller than the frame */
@@ -4882,7 +4883,7 @@ async function runAnalysis(){
   try{
     state.analysis = await structureAnalyze(state.refSource.title||state.refSource.url, state.refSource.seconds||30);
     $("#an-json").value = JSON.stringify(state.analysis, null, 2);
-    $("#an-result-card").classList.remove("hidden");
+    try{ adoptRealStructure({title:state.refSource.title||state.refSource.url,videoUrl:state.refSource.kind==="youtube"?state.refSource.url:null},state.analysis); }catch(e){}
     anLog("✓ 拆解完成(引擎:" + (state.analysis.source==="cloud"?"雲端分析":"本機規則") + ",依標題與長度推導結構)");
     if(state.refSource.kind==="youtube") supabaseWriteAnalysis(state.refSource.url, state.analysis); // 回寫結構庫
     anLog("→ 前往第 4 步：腳本與即時審核。");
@@ -8451,7 +8452,7 @@ async function runCompareSelected(){
     state.analysis=results[0].analysis;
     state.refSource={kind:"youtube",url:results[0].ref.videoUrl,title:results[0].ref.title};
     const j=$("#an-json"); if(j)j.value=JSON.stringify(state.analysis,null,2);
-    $("#an-result-card")?.classList.remove("hidden");
+    try{ adoptRealStructure(results[0].ref,results[0].analysis); }catch(e){}
     setTrendState(trendBanner("info","check-circle",`拆解完成 ${done}/${total} 支(引擎:${results[0].analysis.source==="cloud"?"雲端分析":"本機規則"}):「${escapeHtml(results[0].ref.title)}」的結構已帶入腳本引擎${total>1?"(其餘作為參考記錄)":""}。正在前往步驟 4…`));
     gotoStep(4);
   }catch(e){
@@ -8630,11 +8631,39 @@ const STRUCTURE_SAMPLES=[
   {id:"ref-food",label:"One preparation step changes the result",shift:-7,poster:"./assets/demo/coffee-shot-4.jpg"},
   {id:"ref-retail",label:"Why customers return after the first visit",shift:2,poster:"./assets/demo/cafe-storefront.jpg"}
 ];
-function structureSampleMeta(){return STRUCTURE_SAMPLES.find(s=>s.id===structureSample)||STRUCTURE_SAMPLES[0];}
+let structureLiveMeta=null; // {title, videoUrl, thumb, source, seconds}
+function structureSampleMeta(){
+  if(structureSample==="live"&&structureLiveMeta)return {id:"live",label:structureLiveMeta.title,shift:0,poster:structureLiveMeta.thumb||"./assets/demo/coffee-shot-1.jpg"};
+  return STRUCTURE_SAMPLES.find(s=>s.id===structureSample)||STRUCTURE_SAMPLES[0];
+}
+const LIVE_RAILS=["#d9884b","#c98a55","#7fa8c4","#9b7fc4","#c47f7f","#7fc4a1","#c4b57f","#8a8f96"];
+const LIVE_ICONS=["bolt","pulse","tools","heart","target","bars","image","mic"];
+function adoptRealStructure(ref,analysis){
+  const segs=(analysis?.segments||[]).slice(0,8);
+  if(!segs.length)return false;
+  if(!adoptRealStructure._backup)adoptRealStructure._backup=STRUCTURE_SEGMENTS.filter(s=>!s.live).map(s=>({...s}));
+  const rows=segs.map((s,i)=>{
+    const from=Math.max(0,Math.round(Number(s.from)||0)), to=Math.max(from+1,Math.round(Number(s.to)||from+4));
+    return { n:i+1, rail:LIVE_RAILS[i%LIVE_RAILS.length], icon:LIVE_ICONS[i%LIVE_ICONS.length],
+      name:String(s.name||`段落 ${i+1}`).slice(0,20), role:String(s.role||"").slice(0,20),
+      visual:"真實拆解未提供逐鏡視覺指示;請以段落目的自行設計畫面。", voice:"依段落目的撰寫,口語短句。",
+      retention:"真實拆解依標題與長度推導,不含平台留存數據。",
+      from:structureClock(from), to:structureClock(to), dur:Math.max(1,to-from),
+      strength:null, confidence:null, live:true,
+      points:[String(s.purpose||s.role||s.name||"").slice(0,80)].filter(Boolean),
+      purpose:String(s.purpose||"—"), advice:`${Math.max(1,to-from)} 秒(依原片)`, pace:"—", captions:"—",
+      evidence:["來源:結構分析引擎(依影片標題與長度推導)"], patterns:[String(s.role||s.name||"").slice(0,12)].filter(Boolean) };
+  });
+  STRUCTURE_SEGMENTS.length=0; STRUCTURE_SEGMENTS.push(...rows);
+  structureLiveMeta={ title:String(ref?.title||analysis?.title||"真實參考影片"), videoUrl:ref?.videoUrl||null,
+    thumb:ref?.thumb||null, source:analysis?.source||"cloud", seconds:rows.at(-1)?structureSecondsOf(rows.at(-1).to):null };
+  structureSample="live"; structureSelected=1; structurePicked=new Set(rows.map(r=>r.n));
+  return true;
+}
 function structureBrandFit(seg){
   const words=`${state.brand?.industry||""} ${state.brand?.desc||""} ${state.brand?.slogan||""} ${state.brand?.tone||""}`;
   const hay=`${seg.purpose} ${seg.patterns.join(" ")} ${seg.visual} ${seg.voice}`;
-  let score=seg.confidence-6;
+  let score=(seg.confidence??81)-6;
   const reasons=[];
   if(!words.trim()){return {score:Math.max(40,score-10),reasons:["尚未填寫品牌資料，僅以結構本身的信心值估算。"]};}
   for(const token of ["咖啡","餐飲","美業","保養","健身","零售","服務","課程"]){
@@ -8647,9 +8676,9 @@ function structureBrandFit(seg){
 }
 function structureVisibleSegments(){
   const q=structureQuery.trim().toLowerCase();
-  let rows=STRUCTURE_SEGMENTS.map(seg=>({...seg,strength:Math.max(35,Math.min(98,seg.strength+structureSampleMeta().shift)),fit:structureBrandFit(seg)}));
+  let rows=STRUCTURE_SEGMENTS.map(seg=>({...seg,strength:seg.live?null:Math.max(35,Math.min(98,seg.strength+structureSampleMeta().shift)),fit:structureBrandFit(seg)}));
   if(q)rows=rows.filter(seg=>`${seg.name} ${seg.role} ${seg.purpose} ${seg.points.join(" ")} ${seg.patterns.join(" ")} ${seg.visual} ${seg.voice}`.toLowerCase().includes(q));
-  if(structureSort==="strength")rows.sort((a,b)=>b.strength-a.strength);
+  if(structureSort==="strength")rows.sort((a,b)=>(b.strength||0)-(a.strength||0));
   else if(structureSort==="fit")rows.sort((a,b)=>b.fit.score-a.fit.score);
   else rows.sort((a,b)=>a.n-b.n);
   return rows;
@@ -8688,6 +8717,20 @@ function setStructureState(phase,message){
 function runStructureAnalysis(sampleId){
   if(!navigator.onLine){setStructureState("offline");return;}
   structureSample=sampleId||structureSample;
+  if(structureSample==="live"&&structureLiveMeta){
+    setStructureState("loading");
+    structureAnalyze(structureLiveMeta.title,structureLiveMeta.seconds||30).then(parsed=>{
+      state.analysis=parsed;
+      adoptRealStructure({title:structureLiveMeta.title,videoUrl:structureLiveMeta.videoUrl,thumb:structureLiveMeta.thumb},parsed);
+      renderStructureAnalysis(); setStructureState("ready");
+      $("#an-log").textContent=`已重新拆解「${structureLiveMeta.title}」(${parsed.source==="cloud"?"雲端分析":"本機規則"})。`;
+    }).catch(error=>setStructureState("error",error.message||String(error)));
+    return;
+  }
+  if(structureLiveMeta&&structureSample!=="live"&&STRUCTURE_SEGMENTS[0]?.live&&adoptRealStructure._backup){
+    STRUCTURE_SEGMENTS.length=0; STRUCTURE_SEGMENTS.push(...adoptRealStructure._backup);
+    structureSelected=1; structurePicked=new Set([1]);
+  }
   setStructureState("loading");
   window.setTimeout(()=>{
     try{
@@ -8718,7 +8761,9 @@ function renderStructureDetail(){
    +`<div><dt>${ico("mic")}口播處理</dt><dd>${escapeHtml(seg.voice)}</dd></div>`
    +`<div><dt>${ico("type")}字幕密度</dt><dd>${escapeHtml(seg.captions)}</dd></div>`
    +`<div><dt>${ico("evidence")}爆點與留存理由</dt><dd><p style="margin:0 0 6px">${escapeHtml(seg.retention)}</p><ul>${seg.evidence.map(x=>`<li>${escapeHtml(x)}</li>`).join("")}</ul></dd></div>`
-   +`<div><dt>${ico("gauge")}結構信心</dt><dd>${seg.confidence>=85?"高":seg.confidence>=75?"中高":"中"}（${seg.confidence}%）<div class="confidence-bar" style="--v:${seg.confidence}%"><i></i></div></dd></div>`
+   +(seg.confidence==null
+     ?`<div><dt>${ico("gauge")}結構信心</dt><dd>真實拆解(${structureLiveMeta?.source==="cloud"?"雲端分析引擎":"本機規則引擎"});平台未提供信心指標,不捏造。</dd></div>`
+     :`<div><dt>${ico("gauge")}結構信心</dt><dd>${seg.confidence>=85?"高":seg.confidence>=75?"中高":"中"}（${seg.confidence}%）<div class="confidence-bar" style="--v:${seg.confidence}%"><i></i></div></dd></div>`)
    +`<div><dt>${ico("brand")}品牌適配度</dt><dd>${fit.score>=80?"高":fit.score>=65?"中高":"中"}（${fit.score}%）<div class="confidence-bar" style="--v:${fit.score}%"><i></i></div><ul>${fit.reasons.map(x=>`<li>${escapeHtml(x)}</li>`).join("")}</ul></dd></div>`
    +`<div><dt>${ico("hexagon")}可重用模式</dt><dd><div class="pattern-chips">${seg.patterns.map(x=>`<span>${escapeHtml(x)}</span>`).join("")}</div><button class="btn ghost small" type="button" id="btn-structure-save-template" style="margin-top:9px">${ico("bookmark")}保存為可複用模板</button></dd></div>`;
   $("#btn-structure-save-template").addEventListener("click",()=>saveStructureTemplate(seg));
@@ -8750,10 +8795,11 @@ function renderStructureAnalysis(){
   const total=STRUCTURE_SEGMENTS.at(-1).to;
   const meta=structureSampleMeta();
   const rows=structureVisibleSegments();
-  card.innerHTML=`<div class="structure-head"><div><p class="eyebrow">VIRAL STRUCTURE ANALYZER</p><h3>爆款抽象結構拆解</h3><p class="hint">解析高互動影片的結構與策略，萃取可重用的成功模式。</p></div><span class="demo-badge">MOCK EVIDENCE · 不複製原片表達</span></div>`
+  const isLive=structureSample==="live"&&structureLiveMeta;
+  card.innerHTML=`<div class="structure-head"><div><p class="eyebrow">VIRAL STRUCTURE ANALYZER</p><h3>爆款抽象結構拆解</h3><p class="hint">解析高互動影片的結構與策略，萃取可重用的成功模式。</p></div><span class="demo-badge">${isLive?`真實拆解 · ${structureLiveMeta.source==="cloud"?"雲端分析":"本機規則"} · 不複製原片表達`:"MOCK EVIDENCE · 不複製原片表達"}</span></div>`
    +`<div class="structure-toolbar">`
      +`<button class="btn ghost small" type="button" id="btn-structure-back">${ico("arrow-left")}返回趨勢參考</button>`
-     +`<label for="structure-sample">參考樣本<select id="structure-sample">${STRUCTURE_SAMPLES.map(s=>`<option value="${s.id}"${s.id===structureSample?" selected":""}>${escapeHtml(s.label)}</option>`).join("")}</select></label>`
+     +`<label for="structure-sample">參考樣本<select id="structure-sample">${(structureLiveMeta?[{id:"live",label:structureLiveMeta.title}]:[]).concat(STRUCTURE_SAMPLES).map(s=>`<option value="${s.id}"${s.id===structureSample?" selected":""}>${escapeHtml(s.label)}</option>`).join("")}</select></label>`
      +`<span class="search">${ico("search")}<input type="text" id="structure-search" placeholder="搜尋段落、模式或說明" value="${escapeHtml(structureQuery)}"></span>`
      +`<label for="structure-sort">排序<select id="structure-sort"><option value="time"${structureSort==="time"?" selected":""}>依時間順序</option><option value="strength"${structureSort==="strength"?" selected":""}>依互動強度</option><option value="fit"${structureSort==="fit"?" selected":""}>依品牌適配度</option></select></label>`
      +`<button class="btn ghost small" type="button" id="btn-structure-reanalyse">${ico("refresh")}重新拆解</button>`
@@ -8763,21 +8809,22 @@ function renderStructureAnalysis(){
    +`<div class="structure-workbench">`
    +`<section class="structure-ref"><div class="panel-head"><b>參考影片</b><span class="parsed-dot">已解析完成</span></div>`
      +`<div class="ref-stage"><ol class="timecode-rail">${STRUCTURE_SEGMENTS.map(s=>`<li style="--seg:${s.rail}" data-rail-seek="${structureSecondsOf(s.from)}" title="跳到 ${s.from}"><span>${s.from}</span><i></i></li>`).join("")}<li style="--seg:#9b7fc4" data-rail-seek="${structureSecondsOf(total)}" title="跳到 ${total}"><span>${total}</span><i></i></li></ol>`
-     +`<video id="structure-video" muted playsinline preload="metadata" poster="${escapeHtml(meta.poster)}" aria-label="參考影片預覽"><source src="./assets/mock/iris-test-delivery.mp4" type="video/mp4"></video></div>`
+     +`<video id="structure-video" muted playsinline preload="metadata" poster="${escapeHtml(meta.poster)}" aria-label="參考影片預覽">${isLive?"":'<source src="./assets/mock/iris-test-delivery.mp4" type="video/mp4">'}</video></div>`
+     +(isLive&&structureLiveMeta.videoUrl?`<p class="hint" style="margin:8px 0 0">${ico("play")}原片受平台限制無法內嵌:<a href="${escapeHtml(structureLiveMeta.videoUrl)}" target="_blank" rel="noopener noreferrer" style="color:#e8a763">到 YouTube 開啟觀看</a></p>`:"")
      +`<div class="ref-transport"><button class="btn" type="button" id="btn-structure-play" aria-label="播放參考片" title="播放參考片">${ico("play")}</button>`
        +`<span class="time" id="structure-time">00:00 / 00:00</span>`
        +`<input type="range" id="structure-seek" min="0" max="100" step="0.1" value="0" aria-label="參考片播放進度">`
        +`<button class="btn" type="button" id="btn-structure-full" aria-label="全螢幕參考片" title="全螢幕參考片">${ico("expand")}</button></div>`
      +`<div class="ref-meta"><p>${escapeHtml(meta.label)}</p><div class="ref-facts"><div><span>時長</span><b>${total}</b></div><div><span>比例</span><b>9:16</b></div><div><span>解析時間</span><b>${escapeHtml(structureParsedAt)}</b></div></div>`
      +`<p class="hint" style="margin:11px 0 0">只分析時間碼與抽象結構；不可重用人物、品牌、音樂、畫面或逐句文字。</p></div></section>`
-   +`<section class="structure-timeline"><div class="panel-head"><b>結構時間軸（共 ${rows.length} / ${STRUCTURE_SEGMENTS.length} 段）</b><span class="hint">依互動強度顯示（越高越有效）</span></div>`
+   +`<section class="structure-timeline"><div class="panel-head"><b>結構時間軸（共 ${rows.length} / ${STRUCTURE_SEGMENTS.length} 段）</b><span class="hint">${isLive?"真實拆解:依時間順序;平台未提供互動數據,不捏造":"依互動強度顯示（越高越有效）"}</span></div>`
      +`<div class="structure-table"><div class="structure-thead"><span></span><span>段落</span><span>時間區間</span><span>內容重點</span><span>互動強度</span></div>`
      +(rows.length?rows.map(s=>`<button type="button" class="structure-row ${s.n===structureSelected?"selected":""} ${structurePicked.has(s.n)?"picked":""}" data-structure-seg="${s.n}" style="--seg:${s.rail}">`
        +`<span class="seg-pick" data-structure-pick="${s.n}" role="checkbox" aria-checked="${structurePicked.has(s.n)}" aria-label="選取段落 ${s.n} 加入腳本">${ico("check")}</span>`
        +`<span class="seg-index"><b>${s.n}</b><em><i class="seg-icon">${ico(s.icon)}</i>${escapeHtml(s.name)}<br>${escapeHtml(s.role)}</em></span>`
        +`<span class="seg-time"><b>${s.from} – ${s.to}</b><small>${s.dur} 秒</small></span>`
        +`<ul class="seg-points">${s.points.map(p=>`<li>${escapeHtml(p)}</li>`).join("")}<li class="seg-fit">品牌適配度 ${s.fit.score}%</li></ul>`
-       +`<span class="seg-strength"><b>${s.strength}%</b><span class="spark">${structureSparkline(s.strength)}</span></span></button>`).join("")
+       +(s.strength==null?`<span class="seg-strength"><small style="color:#8f8a84">無互動<br>數據</small></span></button>`:`<span class="seg-strength"><b>${s.strength}%</b><span class="spark">${structureSparkline(s.strength)}</span></span></button>`)).join("")
        :`<div class="structure-empty">沒有符合「${escapeHtml(structureQuery)}」的段落。<br><button class="btn ghost small" type="button" id="btn-structure-clear-search" style="margin-top:9px">清除搜尋</button></div>`)
      +`</div><div class="structure-picked-bar"><b>已選 ${structurePicked.size} / ${STRUCTURE_SEGMENTS.length} 段</b><span>選取的段落會成為腳本的骨架</span><button class="btn teal small" type="button" id="btn-structure-add">加入腳本</button></div>`
      +`<div class="structure-table-foot"><button class="btn small ghost" type="button" id="btn-structure-collapse">收合時間軸</button></div></section>`
