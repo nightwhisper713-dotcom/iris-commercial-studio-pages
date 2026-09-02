@@ -4934,6 +4934,7 @@ R1 前 1.5 秒三重 hook:第 1 鏡口播第一句 ≤15 字且必須「指名�
 R2 一片一訊息:全片只推「一個」服務或痛點,禁止塞第二個賣點。
 R3 UGC 原生感:口播像老闆本人對客人講話,口語、短句;禁廣告腔、禁「歡迎蒞臨」「專業團隊」「品質保證」類官腔詞。
 R4 每鏡口播 ≤26 字(4 秒唸得完);整片口播禁止前後鏡重複同一句。
+R4b 分段切點設計:本片會切成前後兩段生成,分界在鏡 ${Math.ceil(shotCount/2)} 與鏡 ${Math.ceil(shotCount/2)+1} 之間——鏡 ${Math.ceil(shotCount/2)} 的 voiceover 必須是完整句子並在該鏡內講完(句號收尾),動作要有收束感;鏡 ${Math.ceil(shotCount/2)+1} 開啟新節拍並換機位/景別(人物、服裝、光線一致)。嚴禁一句台詞或連續動作跨越這兩鏡。
 R5 CTA 只出現在最後一鏡,且必含一個 2-4 字私訊暗號(如:私訊「健檢」),前面所有鏡頭禁止出現「私訊」二字。
 R5b【CTA 必須有誘因】只寫「私訊XX」等於沒有 CTA。最後一鏡的 voiceover 必須同時具備三要素:①低門檻動作(私訊暗號)②對方立刻可得的具體好處——免費診斷 / 免費估價 / 送懶人包 / 送檢查表 / 免費體驗,不可用「了解更多」「歡迎詢問」這種空話 ③稀缺或時限感(本週 / 前 10 位 / 這個月)。範例:「這週私訊『健檢』,免費幫你看三個最該修的地方。」
 R6 禁語:${b.banned.join("、")||"無"};醫療/療效保證詞一律禁止。
@@ -5074,7 +5075,7 @@ $("#btn-apply-script").addEventListener("click",()=>{
 });
 
 const TAIL_HOLD = 1.6; // 結尾定格停留:讓最後一句唸完、品牌卡看得完,不會突兀切斷
-const SEAM_TRIM = 1.2;  // 接縫修剪:H3 每段結尾常有 1~1.6 秒無台詞死氣,提前切到下一段消除中斷感
+const SEAM_TRIM = 0.4;  // 接縫修剪:段尾現在是刻意的收束定格(台詞提前 0.5s 講完),只微剪殘餘死氣,讓切點落在節拍收束處
 function shotsDuration(){ return state.project ? state.project.shots.reduce((a,s)=>a+s.dur,0) : 28; }
 function segTotal(){ return (state.segMedia||[]).reduce((a,s)=>a+(s.useDur||s.dur),0); }
 function totalDuration(){
@@ -6670,10 +6671,10 @@ function h3SegmentPrompt(list, segIndex, totalSegs){
         ? "人物說話的聲線、音色、語氣完全模仿參考音檔(reference audio),但講的內容依上面各段指定的台詞。"
         : "人物用自然、有生活感的台灣口音講話,不要播音腔。");
   const contNote = segIndex>0
-    ? "【延續鐵律】本段是參考影片(reference video)的直接延續,不是新的一支片:**同一個人、同一件衣服(顏色款式完全相同)、同一個地點、同一種光線色溫**。開頭第一幀要能無縫接上參考影片的最後一幀(人物位置與鏡位相近)。嚴禁換場景、換衣服、換時間、換打光。"
+    ? "【身分鐵律】參考影片(reference video)是同一支片的上一段,用它鎖定身分與質感:**同一個人、同一件衣服(顏色款式完全相同)、同一種光線色溫、同一種畫質手感**。但本段是「剪接後的新鏡頭」——開頭直接以本段第一鏡指定的新機位/景別乾脆開場,人物已就位、動作已開始,**不要**複製參考影片最後一幀的位置與姿勢,不要做任何承接動作。嚴禁換人、換衣服、換時間、換打光。"
     : "";
   const seamNote = (segIndex < totalSegs-1)
-    ? "\n【接續要求・務必遵守】本段不是結尾,後面還有下一段:人物必須從頭講到最後一秒都不停頓,結尾不要留任何沉默、不要收尾動作、不要淡出——講到一半被接走才是正確的。"
+    ? "\n【段尾收束・務必遵守】本段結尾就是一個剪接點:最後一句台詞必須在本段結束前約 0.5 秒完整講完(句號收尾),最後一鏡以收束動作定住(放下手/看向成品/微點頭),不要淡出、不要開啟新動作、更不要把話講到一半——講一半被切斷就是失敗。"
     : "";
   const isFinalSeg = segIndex === totalSegs-1;
   const payoffNote = isFinalSeg
@@ -6755,7 +6756,7 @@ async function runQueueH3(){
   if(!Array.isArray(state.segMedia)) state.segMedia = [];
   const doneCount = state.segMedia.length; // resume: keep finished segments
   let prevUrl = doneCount ? state.segMedia[doneCount-1].url : null;
-  let startAcc = state.segMedia.reduce((a,s)=>a+s.dur,0);
+  let startAcc = state.segMedia.reduce((a,s)=>a+(s.useDur||s.dur),0); // 對齊時間軸:已完成段以修剪後長度累計,切點才會落在規劃的段界上
   if(doneCount) glog(`(續跑:已完成 ${doneCount} 段,從段 ${doneCount+1} 繼續)`);
   const prog = $("#gen-progress");
   for(let i=doneCount;i<segLists.length;i++){
@@ -7319,7 +7320,7 @@ R5 CTA 只在最後一鏡,含 2-4 字私訊暗號;前面禁止出現「私訊」
 R5b CTA 必須有誘因:低門檻動作 + 具體好處(免費診斷/估價/贈品/體驗)+ 時限或稀缺(本週/前 N 位)。若主理人要求純形象片無 CTA,則 cta_code 留空字串且最後一鏡不放 CTA。
 R6 禁語與醫療療效保證一律不用。
 R8【最高優先】action_prompt 絕對禁止要求畫面產生任何文字、字母、Logo、店名、招牌字、菜單字——模型無法正確生成中文。需要招牌/海報/菜單入鏡時一律描述成「全新空白素面板材」。
-R8b 分段連續性:本片會切成前後兩段生成,分界在鏡 ${Math.ceil(shotCount/2)} 與鏡 ${Math.ceil(shotCount/2)+1} 之間,這兩鏡必須同地點、同服裝、同光線。整片控制在 1-2 個場景。
+R8b 分段切點設計:本片會切成前後兩段生成,分界在鏡 ${Math.ceil(shotCount/2)} 與鏡 ${Math.ceil(shotCount/2)+1} 之間——這個分界必須設計成「自然剪接點」:鏡 ${Math.ceil(shotCount/2)} 的 voiceover 必須是完整句子並在該鏡內講完(句號收尾),動作也要有收束感(放下手、看向成品、微點頭之類的段落感);鏡 ${Math.ceil(shotCount/2)+1} 開啟新的敘事節拍,並「換一個機位/景別或換一個場景」(人物、服裝、光線色調維持一致),讓觀眾把段界當成正常剪接。嚴禁一句台詞或一個連續動作跨越這兩鏡。整片控制在 1-2 個場景。
 R9 最後一鏡是視覺 payoff(同機位、從問題狀態轉為理想狀態)。
 
 輸出繁體中文 JSON(只輸出 JSON,不要說明文字):
