@@ -5035,7 +5035,7 @@ async function generateBrandScript(){
   genStage($("#rw-status"),"啟動腳本引擎(含商業規則檢查)…",50);
   try{
     let p = null, violations = [];
-    const MAX_ROUNDS = 6; /* 寫到過為止的空間:最多 6 輪自動修正,不讓客戶自己重跑 */
+    const MAX_ROUNDS = 2; /* 保底交付制:全片重寫最多 2 輪,之後改用定點修句;無論如何都交付腳本 */
     for(let round=1; round<=MAX_ROUNDS; round++){
       const fixNote = violations.length
         ? `\n\n上一版腳本違反了以下硬規則,請修正後重新輸出完整 JSON:\n- ${violations.join("\n- ")}`
@@ -5054,13 +5054,13 @@ async function generateBrandScript(){
       else { $("#rw-status").textContent = `第 ${round}/${MAX_ROUNDS} 輪檢查完成:${violations.length? `${violations.length} 條違規,已達重寫上限,交人工斟酌` : "✓ 通過商業檢查"}`; }
       if(!violations.length) break;
     }
-    if(violations.length){
+    for(let fix=1; fix<=2 && violations.length; fix++){
       try{
-        genStage($("#rw-status"),`殘留 ${violations.length} 條違規,進行定點修句(只改違規句,不重寫全片)…`,15);
+        genStage($("#rw-status"),`定點修句 ${fix}/2:只改寫 ${violations.length} 條違規句,不重寫全片…`,15);
         await microFixScript(p,violations);
         violations=validateCommercial(p,state.brand);
         if(!violations.length)$("#rw-status").textContent="✓ 定點修句完成,通過商業檢查";
-      }catch(e){}
+      }catch(e){ break; }
     }
     p._real = true;
     p.audio = {music:"user-upload", voiceover:"tts"};
@@ -5071,7 +5071,7 @@ async function generateBrandScript(){
     const topicNow = ($("#topic-kw")?.value||"").trim();
     if(topicNow) p.meta = Object.assign({}, p.meta, {topic: topicNow});
     const passMsg = violations.length
-      ? `⚠ 完成但仍有 ${violations.length} 條未過(已列於腳本下方,請人工斟酌):${violations.join(";")}`
+      ? `✓ 腳本已產出並放入上方審核表;仍有 ${violations.length} 條建議人工確認:${violations.join(";")}`
       : `✓ 已通過商業檢查|hook:${p.hook_type||"?"}|公式:${p.formula||"?"}|暗號:「${p.cta_code||"?"}」|聲線:${p.voice?.gender||"?"}·${p.voice?.style||"?"}`;
     $("#rw-status").textContent = passMsg;
     $("#rw-status").className = violations.length? "status-line err" : "status-line ok";
@@ -7389,7 +7389,7 @@ async function generateFromIdea(feedback){
   st.className = "status-line run";
   try{
     let p = null, violations = [];
-    const MAX_ROUNDS = 6;
+    const MAX_ROUNDS = 2; /* 保底交付制 */
     for(let round=1; round<=MAX_ROUNDS; round++){
       const fixNote = violations.length ? `\n\n上一版違反以下硬規則,請修正後重新輸出完整 JSON:\n- ${violations.join("\n- ")}` : "";
       genStage(st, round===1
@@ -7406,13 +7406,13 @@ async function generateFromIdea(feedback){
       st.textContent = `第 ${round} 輪:${violations.length? violations.length+" 條待修,自動重寫中…" : "✓ 通過商業檢查"}`;
       if(!violations.length) break;
     }
-    if(violations.length){
+    for(let fix=1; fix<=2 && violations.length; fix++){
       try{
-        genStage(st,`殘留 ${violations.length} 條違規,進行定點修句(只改違規句)…`,15);
+        genStage(st,`定點修句 ${fix}/2:只改寫 ${violations.length} 條違規句…`,15);
         await microFixScript(p,violations);
         const noVO2 = p.shots.every(s=>!String(s.voiceover||"").trim());
         violations = noVO2 ? [] : validateCommercial(p, state.brand);
-      }catch(e){}
+      }catch(e){ break; }
     }
     p._real = true;
     p.audio = Object.assign({ music:"user-upload", voiceover: p.shots.every(s=>!String(s.voiceover||"").trim()) ? null : "tts" }, p.audio||{});
