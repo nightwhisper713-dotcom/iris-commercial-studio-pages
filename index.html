@@ -4943,11 +4943,23 @@ const CREATIVE_SCENES=[
   "清晨剛拉開鐵門的店內","工作檯與工具牆的特寫世界","雨天的騎樓與濕亮路面","地下停車場",
   "交車給客人的那一刻","午後自然光灑進的店內","郊區試車的空曠路段","收店前的最後一個工序"
 ];
+function creativeHistory(){
+  try{ return JSON.parse(localStorage.getItem("iris.creativeHistory")||"[]"); }catch(e){ return []; }
+}
+function creativeHistoryPush(opening){
+  try{
+    const list=creativeHistory();
+    list.push(String(opening||"").slice(0,100));
+    localStorage.setItem("iris.creativeHistory",JSON.stringify(list.slice(-10)));
+  }catch(e){}
+}
 function creativeSeedBlock(){
   const angle=CREATIVE_ANGLES[Math.floor(Math.random()*CREATIVE_ANGLES.length)];
   const scenes=[...CREATIVE_SCENES].sort(()=>Math.random()-.5).slice(0,2);
-  const last=(state.lastOpeningScene||"").trim();
-  return `【創意發想・每一版都必須是新的】本次指定切入手法:「${angle}」——整支片圍繞這個手法展開,不可退回平鋪直敘。場景要具體且貼近品牌真實營運,候選建議(可自創更好的):${scenes.join("、")}。${last?`嚴禁重複上一版的開場:「${last.slice(0,80)}」——開場的時空、地點、情境必須完全不同。`:""}老梗禁令:同樣的場景與開場手法不得連續使用兩版。`;
+  const history=creativeHistory();
+  return `【創意腦暴・寫腳本前先做】你是這支片的創意總監。先在心中想出 5 個「截然不同」的創意方向——不同視角、不同時空、不同敘事手法,其中至少 1 個必須是下方靈感清單以外的原創手法。逐一自評「前 1.5 秒能不能讓人停下滑動」,選出最強的一個方向來寫;若最強的方向與歷史開場雷同,改用次強的。
+【靈感參考・不限於此】手法舉例:「${angle}」;場景舉例:${scenes.join("、")}。這些只是起點,發明更好的方法會得到更高評價。場景必須具體且貼近品牌真實營運。
+${history.length?`【歷史開場・全部禁用】以下是前幾版已用過的開場,本版的時空、地點、情境、手法都不得與其中任何一條雷同:\n${history.map((h,i)=>` ${i+1}. ${h}`).join("\n")}`:""}`;
 }
 function rewritePrompt(shotCount, targetSec){
   const b = state.brand || {name:"本品牌",industry:"美業",tone:"親切鄰家",cta:"",vmode:"daylight",banned:[],desc:""};
@@ -5176,7 +5188,7 @@ async function generateBrandScript(){
       }catch(e){ break; }
     }
     p._real = true;
-    state.lastOpeningScene = String(p.shots?.[0]?.action_prompt||""); /* 供下一版創意種子排除 */
+    creativeHistoryPush(p.shots?.[0]?.action_prompt); /* 記入歷史,之後十版內不得重複 */
     p.audio = {music:"user-upload", voiceover:"tts"};
     state.project = p;
     state.media = {}; state.frames = {}; state.voClips = {}; state.approved = false;
