@@ -8453,8 +8453,9 @@ async function runCompareSelected(){
     state.refSource={kind:"youtube",url:results[0].ref.videoUrl,title:results[0].ref.title};
     const j=$("#an-json"); if(j)j.value=JSON.stringify(state.analysis,null,2);
     try{ adoptRealStructure(results[0].ref,results[0].analysis); }catch(e){}
-    setTrendState(trendBanner("info","check-circle",`拆解完成 ${done}/${total} 支(引擎:${results[0].analysis.source==="cloud"?"雲端分析":"本機規則"}):「${escapeHtml(results[0].ref.title)}」的結構已帶入腳本引擎${total>1?"(其餘作為參考記錄)":""}。正在前往步驟 4…`));
-    gotoStep(4);
+    setTrendState(trendBanner("info","check-circle",`拆解完成 ${done}/${total} 支(引擎:${results[0].analysis.source==="cloud"?"雲端分析":"本機規則"}):「${escapeHtml(results[0].ref.title)}」${total>1?"(其餘作為參考記錄)":""}。前往步驟 3 檢視結構,再到步驟 4 生成腳本。`));
+    gotoStep(3);
+    try{ renderStructureAnalysis(); }catch(e){}
   }catch(e){
     if(timer)window.clearInterval(timer);
     setTrendState(trendBanner("err","alert","拆解失敗:"+escapeHtml(e.message||String(e))+"。",
@@ -8589,7 +8590,7 @@ $("#btn-preview-pick").addEventListener("click",()=>{
   const id=trendFocused||trendRefs()[0]?.id;
   if(id&&!acceptanceSelected.includes(id))acceptanceSelected=[...acceptanceSelected.slice(0,2),id];
   renderAcceptanceSelection();
-  renderStructureAnalysis();
+  runCompareSelected(); /* 真實拆解;完成後前往步驟 3 工作台 */
 });
 new MutationObserver(syncTrendResultCount).observe($("#trend-list"),{childList:true,subtree:true});
 renderKwChips(state.brand?.industry||"");
