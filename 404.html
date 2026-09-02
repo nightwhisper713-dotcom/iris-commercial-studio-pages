@@ -331,6 +331,11 @@ body.review-demo #panel-4>h2,body.review-demo #panel-4>.lock-card,body.review-de
 @keyframes an-rotate{to{transform:rotate(360deg)}}
 .an-spin{animation:an-rotate 1s linear infinite;transform-origin:center}
 body.trend-screen:not(.structure-demo) #an-result-card{display:none!important}
+.gen-line{display:flex;flex-direction:column;gap:6px;width:100%;max-width:560px}
+.gen-line .gen-msg{display:inline-flex;align-items:center;gap:7px}
+.gen-line .bar{height:5px;background:#26292b;border-radius:99px;overflow:hidden}
+.gen-line .bar i{display:block;height:100%;width:2%;background:linear-gradient(90deg,#c9824a,#e8a763);animation:genfill var(--t,50s) cubic-bezier(.25,.6,.35,1) forwards}
+@keyframes genfill{to{width:93%}}
 .is-card .is-sync{background:#0a0c0d;border:1px solid #313436;border-radius:7px;min-height:38px;padding:0 10px;color:#e6e0d8;caret-color:#e8a763}
 .is-card .is-sync:focus{border-color:#c9824a;outline:none}.preview-primary,.project-cta{border:0;border-radius:5px;background:linear-gradient(180deg,#d99a64,#b86f3f);color:#fff;box-shadow:0 7px 20px rgba(194,116,62,.23);cursor:pointer}.preview-primary{width:100%;margin-top:18px;min-height:60px;font-size:18px;font-weight:700;display:flex;justify-content:center;align-items:center;gap:60px}.ratio-picker{position:absolute;z-index:2;right:18px;bottom:14px;display:flex;gap:4px;background:rgba(13,14,15,.85);border:1px solid #323436;border-radius:7px;padding:5px}.ratio-picker label{padding:7px 10px;font-size:12px;color:#ddd}.ratio-picker input{accent-color:#cf8650}.home-assets,.home-voice{padding:16px 20px}.home-assets{grid-column:span 6}.home-voice{grid-column:span 6}.surface-title{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:13px}.surface-title h3{margin:0 0 3px;font:600 16px/1.2 Georgia,"Noto Serif TC",serif}.surface-title small,.surface-title span{color:#9b9a96;font-size:11px}.asset-layout{display:grid;grid-template-columns:1.2fr .8fr .85fr;gap:12px}.drop-zone,.shot-guide,.asset-example{border:1px solid #383a3c;border-radius:6px;min-height:128px;padding:14px;background:#0f1113}.drop-zone{border-style:dashed;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;text-align:center}.drop-zone .upload-icon{font-size:29px;color:#92979a}.drop-zone small,.drop-zone em,.asset-example small{display:block;color:#858789;font-size:10px;margin-top:6px;font-style:normal}.shot-guide ul{margin:10px 0 0;padding-left:18px;color:#a8a7a3;font-size:11px;line-height:1.9}.asset-example{display:flex;flex-direction:column;align-items:center;justify-content:center;color:#8c8e90}.asset-example span{font-size:30px}.privacy-line{display:flex;justify-content:space-between;color:#979694;font-size:10px;margin:12px 0 0}.visually-hidden{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important}.voice-console{position:relative;border:1px solid #343739;border-radius:7px;padding:18px 105px 52px 18px;min-height:128px;background:#0d0f10}.voice-status{font-size:11px;color:#aaa}.voice-status>span{display:inline-block;width:8px;height:8px;border-radius:50%;background:#c78349;margin-right:8px}.voice-timer{position:absolute;top:18px;left:42%;font-variant-numeric:tabular-nums}.voice-timer strong{font:500 23px/1 Georgia,serif}.voice-timer small{color:#777}.waveform{color:#d68b4b;letter-spacing:2px;margin-top:35px;white-space:nowrap;overflow:hidden}.record-orb{position:absolute;right:28px;top:35px;width:62px;height:62px;border-radius:50%;border:2px solid #dc9558;background:#17191a;color:white;box-shadow:0 0 0 6px rgba(216,149,88,.08),0 0 28px rgba(216,149,88,.25);cursor:pointer}.voice-actions{position:absolute;left:14px;right:14px;bottom:10px;display:flex;gap:10px}.home-voice>.consent-line{font-size:10px;margin-top:10px;color:#999}/* the closing action of the brand page, kept in reach the same way the script
    and timeline pages keep theirs: the form above it is taller than the frame */
@@ -5000,13 +5005,18 @@ function validateCommercial(p, brand){
   });
   return bad;
 }
+function genStage(el,text,expectSec){
+  if(!el)return;
+  el.className="status-line run";
+  el.innerHTML=`<span class="gen-line"><span class="gen-msg"><svg class="ico an-spin" aria-hidden="true"><use href="#i-refresh"></use></svg>${escapeHtml(text)}</span><span class="bar" style="--t:${Math.max(3,expectSec||50)}s"><i></i></span></span>`;
+}
 async function generateBrandScript(){
   if(!state.analysis){ $("#rw-status").textContent="✗ 請先完成步驟 2 拆解"; $("#rw-status").className="status-line err"; return; }
   if(!state.styleKey){ state.styleKey="process"; try{ renderStyles(); }catch(e){} } /* 未選風格時預設「幕後過程」,客戶仍可改 */
   const targetSec = parseInt($("#len-tpl").value,10);
   const shotCount = LEN_SHOTS[targetSec];
   try{ const adv=document.querySelector(".script-advanced"); if(adv)adv.open=true; $("#rw-status").scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){}
-  $("#rw-status").textContent = "生成腳本中(含商業規則檢查,約 30-90 秒)…"; $("#rw-status").className="status-line run";
+  genStage($("#rw-status"),"啟動腳本引擎(含商業規則檢查)…",50);
   try{
     let p = null, violations = [];
     const MAX_ROUNDS = 6; /* 寫到過為止的空間:最多 6 輪自動修正,不讓客戶自己重跑 */
@@ -5014,17 +5024,18 @@ async function generateBrandScript(){
       const fixNote = violations.length
         ? `\n\n上一版腳本違反了以下硬規則,請修正後重新輸出完整 JSON:\n- ${violations.join("\n- ")}`
         : "";
-      $("#rw-status").textContent = round===1
-        ? `第 1/${MAX_ROUNDS} 輪:AI 依拆解結構撰寫 ${shotCount} 鏡原創腳本中(約 30-60 秒)…`
-        : `第 ${round}/${MAX_ROUNDS} 輪:修正上一版的 ${violations.length} 條商業規則違規,重寫中(約 30-60 秒)…`;
+      genStage($("#rw-status"), round===1
+        ? `第 1/${MAX_ROUNDS} 輪:AI 依拆解結構撰寫 ${shotCount} 鏡原創腳本中…`
+        : `第 ${round}/${MAX_ROUNDS} 輪:修正上一版的 ${violations.length} 條商業規則違規,重寫中…`, 45);
       const text = await irisGenerate("script-default", [{text: rewritePrompt(shotCount, targetSec) + fixNote}], true);
       p = parseJsonLoose(text);
       if(!Array.isArray(p.shots) || !p.shots.length) throw new Error("腳本缺 shots");
       const pd = plannedDurs(p.shots.length);
       p.shots.forEach((s,i)=>{ s.id = i+1; s.dur = pd[i] || 4; });
-      $("#rw-status").textContent = `第 ${round}/${MAX_ROUNDS} 輪:腳本已寫完,正在逐條檢查商業硬規則(hook/CTA/字數/禁語)…`;
+      genStage($("#rw-status"),`第 ${round}/${MAX_ROUNDS} 輪:腳本已寫完,正在逐條檢查商業硬規則(hook/CTA/字數/禁語)…`,4);
       violations = validateCommercial(p, state.brand);
-      $("#rw-status").textContent = `第 ${round}/${MAX_ROUNDS} 輪檢查完成:${violations.length? `${violations.length} 條違規${round<MAX_ROUNDS?",自動重寫中…":",已達重寫上限,交人工斟酌"}` : "✓ 通過商業檢查"}`;
+      if(violations.length&&round<MAX_ROUNDS){ genStage($("#rw-status"),`第 ${round}/${MAX_ROUNDS} 輪檢查完成:${violations.length} 條違規,自動重寫中…`,45); }
+      else { $("#rw-status").textContent = `第 ${round}/${MAX_ROUNDS} 輪檢查完成:${violations.length? `${violations.length} 條違規,已達重寫上限,交人工斟酌` : "✓ 通過商業檢查"}`; }
       if(!violations.length) break;
     }
     p.audio = {music:"user-upload", voiceover:"tts"};
@@ -7356,9 +7367,9 @@ async function generateFromIdea(feedback){
     const MAX_ROUNDS = 6;
     for(let round=1; round<=MAX_ROUNDS; round++){
       const fixNote = violations.length ? `\n\n上一版違反以下硬規則,請修正後重新輸出完整 JSON:\n- ${violations.join("\n- ")}` : "";
-      st.textContent = round===1
-        ? `第 1/${MAX_ROUNDS} 輪:AI 依你的想法撰寫 ${shotCount} 鏡腳本中(約 30-60 秒)…`
-        : `第 ${round}/${MAX_ROUNDS} 輪:修正 ${violations.length} 條違規,重寫中(約 30-60 秒)…`;
+      genStage(st, round===1
+        ? `第 1/${MAX_ROUNDS} 輪:AI 依你的想法撰寫 ${shotCount} 鏡腳本中…`
+        : `第 ${round}/${MAX_ROUNDS} 輪:修正 ${violations.length} 條違規,重寫中…`, 45);
       const text = await irisGenerate("script-default",
         [{text: ideaPrompt(shotCount, targetSec, idea, feedback, feedback? state.project : null) + fixNote}], true);
       p = parseJsonLoose(text);
