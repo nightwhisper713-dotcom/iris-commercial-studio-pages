@@ -53,8 +53,12 @@
     return { id: session.user_id || null, email: session.email || null, expiresAt: session.expires_at || null };
   }
 
-  async function authFetch(path, body) {
-    const response = await fetch(`${config.supabaseUrl}/auth/v1/${path}`, {
+  async function authFetch(path, body, query) {
+    const url = new URL(`${config.supabaseUrl}/auth/v1/${path}`);
+    for (const [key, value] of Object.entries(query || {})) {
+      if (value) url.searchParams.set(key, value);
+    }
+    const response = await fetch(url.toString(), {
       method: "POST",
       headers: { "Content-Type": "application/json", "apikey": config.supabasePublishableKey },
       body: JSON.stringify(body),
@@ -85,7 +89,7 @@
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(email || ""))) {
       throw Object.assign(new Error("Enter a valid email address."), { code: "INVALID_REQUEST" });
     }
-    await authFetch("otp", { email, create_user: true, options: { email_redirect_to: redirectTarget() } });
+    await authFetch("otp", { email, create_user: true }, { redirect_to: redirectTarget() });
     return { sent: true, redirectTo: redirectTarget() };
   }
 

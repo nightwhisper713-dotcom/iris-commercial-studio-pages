@@ -2616,7 +2616,7 @@ body.home-screen header h1.brand-mark b{font-size:18px}
 <div class="modal-bg" id="auth-modal-bg">
   <div class="modal auth-modal" role="dialog" aria-modal="true" aria-labelledby="auth-title">
     <h3 id="auth-title">登入 IRIS</h3>
-    <p class="hint" id="auth-intro">輸入 Email，我們會寄出登入連結與六位數驗證碼。不需要密碼。</p>
+    <p class="hint" id="auth-intro">輸入 Email，我們會寄出登入連結與驗證碼。不需要密碼。</p>
     <label for="auth-email">Email</label>
     <input type="email" id="auth-email" autocomplete="email" placeholder="you@example.com">
     <div class="row" style="gap:8px;margin-top:10px">
@@ -2625,7 +2625,7 @@ body.home-screen header h1.brand-mark b{font-size:18px}
     </div>
     <div id="auth-code-row" class="hidden" style="margin-top:12px">
       <label for="auth-code">驗證碼</label>
-      <input type="text" id="auth-code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="8 位數字">
+      <input type="text" id="auth-code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="驗證碼">
       <button class="btn" type="button" id="btn-auth-verify" style="margin-top:8px">驗證並登入</button>
     </div>
     <p class="status-line" id="auth-status" role="status" aria-live="polite"></p>
@@ -3040,7 +3040,7 @@ const I18N_PHRASES=Object.assign(Object.create(null),{
   "登出": "Sign out",
   "離線試用": "Offline trial",
   "已登入": "Signed in",
-  "輸入 Email，我們會寄出登入連結與六位數驗證碼。不需要密碼。": "Enter your email and we will send a sign-in link and a six-digit code. No password needed.",
+  "輸入 Email，我們會寄出登入連結與驗證碼。不需要密碼。": "Enter your email and we will send a sign-in link and a code. No password needed.",
   "寄出登入連結": "Send the sign-in link",
   "稍後再說": "Not now",
   "驗證碼": "Verification code",
@@ -9801,7 +9801,7 @@ function installAuthControls(){
     try{
       const result=await window.IRIS_SUPABASE.signInWithEmail(email);
       $("#auth-code-row").classList.remove("hidden");
-      say(`已寄到 ${email}。點連結,或輸入信中的六位數驗證碼。`,"ok");
+      say(`已寄到 ${email}。點連結,或輸入信中的驗證碼。`,"ok");
       void result;
     }catch(error){
       say(error.code==="SECURITY_LOCKED"
