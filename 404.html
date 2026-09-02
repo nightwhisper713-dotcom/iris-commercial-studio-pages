@@ -5065,9 +5065,9 @@ async function generateStoryboardFrames(onlyId){
   if(!shots.length){ if(st){st.className="status-line err";st.textContent="✗ 請先生成腳本";} return; }
   if(!window.IRIS_SUPABASE?.configured?.()||!window.IRIS_SUPABASE.user()){ if(st){st.className="status-line err";st.textContent="✗ 請先登入";} return; }
   sbRunning=true;
-  const consistency=`${state.project?.anchor||""}
-【一致性鐵律】整個分鏡系列屬於同一支影片:同一位主角、同一件服裝、同一個場地、同一種光線色溫與畫質。附上的參考圖是已定稿的分鏡與場地——人物長相、髮型、衣著、空間陳設必須與參考圖完全一致,只允許改變動作與構圖。
-【禁令】畫面中不得出現任何文字、字母、數字、Logo、招牌字。9:16 直式,寫實手持 UGC 質感,不要棚拍廣告感。`;
+  const consistency=`【一致性鐵律】整個分鏡系列屬於同一支影片:同一位主角、同一件服裝、同一個場地、同一種光線色溫與畫質。附上的參考圖是已定稿的分鏡與場地——人物長相、髮型、衣著、空間陳設必須與參考圖完全一致,只允許改變動作與構圖。
+【禁令】畫面中不得出現任何文字、字母、數字、Logo、招牌字;不得出現本鏡描述以外的任何人物。9:16 直式,寫實手持 UGC 質感,不要棚拍廣告感。
+【整片氛圍】${state.project?.anchor||""}`;
   const brandRefs=[];
   for(const a of (state.brandAssets||[]).slice(0,2)){ const b=await shrinkToPngB64(typeof a==="string"?a:a.url,480); if(b)brandRefs.push(b); }
   const targets=onlyId?shots.filter(s=>s.id===onlyId):shots;
@@ -5082,7 +5082,11 @@ async function generateStoryboardFrames(onlyId){
     if(anchorF&&shot.id!==shots[0].id)refs.push(await shrinkToPngB64(anchorF,480));
     if(prevF&&prevF!==anchorF)refs.push(await shrinkToPngB64(prevF,480));
     for(const b of brandRefs){ if(refs.length<3)refs.push(b); }
-    const prompt=`${consistency}\n【本鏡畫面】${shot.action_prompt||shot.img_prompt||"品牌日常實景"}\n【輸出要求】直接輸出一張 9:16 圖片。不要輸出任何文字、說明或問題——只要圖片。`;
+    const prompt=`【本鏡畫面・最高優先,逐字執行】${shot.action_prompt||shot.img_prompt||"品牌日常實景"}
+【構圖重點】上面描述中的「視角/鏡頭位置」(例如:從車內往外拍、特寫、俯拍)是本張圖的第一要務,必須精準呈現,不可改成旁觀視角。
+${shot.img_prompt&&shot.img_prompt!==shot.action_prompt?`【視覺補充】${shot.img_prompt}`:""}
+${consistency}
+【輸出要求】直接輸出一張 9:16 圖片。不要輸出任何文字、說明或問題——只要圖片。`;
     let url=null;
     for(let sbTry=1; sbTry<=3 && !url; sbTry++){ /* 單張最多 3 次,失敗換下一張,不中斷整批 */
       try{ url=await storyboardFrame(prompt,refs); }
