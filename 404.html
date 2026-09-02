@@ -4879,26 +4879,17 @@ async function runAnalysis(){
   $("#an-log").scrollIntoView({behavior:"smooth", block:"center"});
   if(!state.refSource){ anLog("✗ 請先選趨勢牆影片、貼連結或上傳檔案。"); return; }
   $("#an-log").textContent = "";
-  anLog("拆解中(" + (state.refSource.title||state.refSource.url) + ")…約 20-60 秒");
+  anLog("拆解中(" + (state.refSource.title||state.refSource.url) + ")…約 5-20 秒");
   try{
-    const parts = [];
-    if(state.refSource.kind==="youtube"){
-      parts.push({fileData:{fileUri: state.refSource.url, mimeType:"video/mp4"}});
-    }else{
-      parts.push({inlineData:{mimeType: state.refSource.mimeType, data: state.refSource.fileB64}});
-    }
-    parts.push({text: ANALYZE_PROMPT});
-    const text = await irisGenerate("analysis-default", parts, true);
-    state.analysis = parseJsonLoose(text);
+    state.analysis = await structureAnalyze(state.refSource.title||state.refSource.url, state.refSource.seconds||30);
     $("#an-json").value = JSON.stringify(state.analysis, null, 2);
     $("#an-result-card").classList.remove("hidden");
-    anLog("✓ 拆解完成:" + (state.analysis.why_viral||"") );
+    anLog("✓ 拆解完成(引擎:" + (state.analysis.source==="cloud"?"雲端分析":"本機規則") + ",依標題與長度推導結構)");
     if(state.refSource.kind==="youtube") supabaseWriteAnalysis(state.refSource.url, state.analysis); // 回寫結構庫
     anLog("→ 前往第 4 步：腳本與即時審核。");
     gotoStep(4);
   }catch(e){
     anLog("✗ 拆解失敗:" + e.message);
-    if(state.refSource.kind==="youtube") anLog("提示:YouTube 連結分析需為公開影片;若持續失敗,改用螢幕錄影上傳檔案。");
   }
 }
 $("#btn-analyze").addEventListener("click", runAnalysis);
@@ -8187,7 +8178,7 @@ function mapTrendVideo(v,i,regionCode,language){
   return { id:v.videoId, title:v.title||"(無標題)", hook:v.title||"", channel:v.channelTitle||"—",
     thumb:v.thumbnail||"", region:regionCode||"TW", language:language||"繁中", age:fmtAge(v.publishedAt),
     duration:fmtDur(v.durationSeconds), freshness, engagement, velocity, relevance,
-    confidence:0, tags:[], live:true, videoUrl:`https://www.youtube.com/watch?v=${encodeURIComponent(v.videoId)}`,
+    confidence:0, tags:[], live:true, durationSeconds:v.durationSeconds||null, videoUrl:`https://www.youtube.com/watch?v=${encodeURIComponent(v.videoId)}`,
     summary:`真實資料:觀看 ${views==null?"—":views.toLocaleString()}・讚 ${likes==null?"—":likes.toLocaleString()}・${v.channelTitle||"—"}。缺少的數字表示平台未提供,不捏造。` };
 }
 function trendQueryFor(mode){
@@ -8392,6 +8383,19 @@ async function runTrendSearch(mode){
     $("#trend-state").querySelector("[data-trend-retry]")?.addEventListener("click",()=>runTrendSearch(mode));
   }
 }
+async function structureAnalyze(title,seconds){
+  const r=await window.IRIS_SUPABASE.invoke("gemini",{body:{
+    task:"structure",
+    input:{ title:String(title||"").slice(0,200), seconds:Math.min(600,Math.max(3,Math.round(seconds||30))), locale:"zh-Hant" },
+    allowLocalFallback:true
+  }});
+  const segs=r?.result?.segments||[];
+  if(!segs.length) throw new Error("分析引擎未回傳結構");
+  return { source:r.source||"cloud", title:String(title||""),
+    segments:segs, structure:segs.map(s=>s.role||s.name),
+    shots:segs.map(s=>({sec:`${s.from}-${s.to}`,"畫面":s.purpose||s.name})),
+    why_viral:"" };
+}
 let compareRunning=false;
 async function runCompareSelected(){
   if(compareRunning)return;
@@ -8405,7 +8409,7 @@ async function runCompareSelected(){
   if(!window.IRIS_SUPABASE?.configured?.()||!window.IRIS_SUPABASE.user()){ setTrendState(trendBanner("warn","alert","請先登入,拆解才會使用真實分析引擎。")); return; }
   compareRunning=true;
   const btn=$("#btn-compare-selected"); if(btn){btn.setAttribute("aria-busy","true");btn.disabled=true;}
-  const total=live.length, EXPECT=45; /* 每支預估秒數 */
+  const total=live.length, EXPECT=12; /* 每支預估秒數(結構任務為文字分析,快很多) */
   let done=0, timer=null;
   const paint=(frac,label)=>{
     const pct=Math.min(99,Math.round(((done+frac)/total)*100));
@@ -8417,10 +8421,8 @@ async function runCompareSelected(){
     for(const ref of live){
       let frac=0; paint(0,ref.title);
       timer=window.setInterval(()=>{ frac=Math.min(0.92,frac+0.9/(EXPECT*2)); paint(frac,ref.title); },500);
-      const parts=[{fileData:{fileUri:ref.videoUrl,mimeType:"video/mp4"}},{text:ANALYZE_PROMPT}];
-      const text=await irisGenerate("analysis-default",parts,true);
+      const parsed=await structureAnalyze(ref.title,ref.durationSeconds);
       window.clearInterval(timer); timer=null;
-      const parsed=parseJsonLoose(text);
       results.push({ref,analysis:parsed});
       try{ supabaseWriteAnalysis(ref.videoUrl,parsed); }catch(e){}
       done++;
@@ -8429,11 +8431,11 @@ async function runCompareSelected(){
     state.refSource={kind:"youtube",url:results[0].ref.videoUrl,title:results[0].ref.title};
     const j=$("#an-json"); if(j)j.value=JSON.stringify(state.analysis,null,2);
     $("#an-result-card")?.classList.remove("hidden");
-    setTrendState(trendBanner("info","check-circle",`拆解完成 ${done}/${total} 支:「${escapeHtml(results[0].ref.title)}」的結構已帶入腳本引擎${total>1?"(其餘作為參考記錄)":""}。正在前往步驟 4…`));
+    setTrendState(trendBanner("info","check-circle",`拆解完成 ${done}/${total} 支(引擎:${results[0].analysis.source==="cloud"?"雲端分析":"本機規則"}):「${escapeHtml(results[0].ref.title)}」的結構已帶入腳本引擎${total>1?"(其餘作為參考記錄)":""}。正在前往步驟 4…`));
     gotoStep(4);
   }catch(e){
     if(timer)window.clearInterval(timer);
-    setTrendState(trendBanner("err","alert","拆解失敗:"+escapeHtml(e.message||String(e))+"。YouTube 連結需為公開影片;持續失敗可改用螢幕錄影上傳。",
+    setTrendState(trendBanner("err","alert","拆解失敗:"+escapeHtml(e.message||String(e))+"。",
       '<button class="btn ghost small" type="button" data-compare-retry="1">重試</button>'));
     $("#trend-state").querySelector("[data-compare-retry]")?.addEventListener("click",()=>runCompareSelected());
   }finally{
