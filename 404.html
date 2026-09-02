@@ -336,6 +336,9 @@ body.trend-screen:not(.structure-demo) #an-result-card{display:none!important}
 .gen-line .bar{height:5px;background:#26292b;border-radius:99px;overflow:hidden}
 .gen-line .bar i{display:block;height:100%;width:2%;background:linear-gradient(90deg,#c9824a,#e8a763);animation:genfill var(--t,50s) cubic-bezier(.25,.6,.35,1) forwards}
 @keyframes genfill{to{width:93%}}
+.sb-thumb{width:74px;aspect-ratio:9/16;object-fit:cover;border-radius:6px;border:1px solid #39332d;display:block;margin-top:7px;cursor:zoom-in}
+.sb-thumb:hover{transform:scale(2.6);transform-origin:left top;z-index:30;position:relative;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.sb-one{margin-top:6px}
 .is-card .is-sync{background:#0a0c0d;border:1px solid #313436;border-radius:7px;min-height:38px;padding:0 10px;color:#e6e0d8;caret-color:#e8a763}
 .is-card .is-sync:focus{border-color:#c9824a;outline:none}.preview-primary,.project-cta{border:0;border-radius:5px;background:linear-gradient(180deg,#d99a64,#b86f3f);color:#fff;box-shadow:0 7px 20px rgba(194,116,62,.23);cursor:pointer}.preview-primary{width:100%;margin-top:18px;min-height:60px;font-size:18px;font-weight:700;display:flex;justify-content:center;align-items:center;gap:60px}.ratio-picker{position:absolute;z-index:2;right:18px;bottom:14px;display:flex;gap:4px;background:rgba(13,14,15,.85);border:1px solid #323436;border-radius:7px;padding:5px}.ratio-picker label{padding:7px 10px;font-size:12px;color:#ddd}.ratio-picker input{accent-color:#cf8650}.home-assets,.home-voice{padding:16px 20px}.home-assets{grid-column:span 6}.home-voice{grid-column:span 6}.surface-title{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:13px}.surface-title h3{margin:0 0 3px;font:600 16px/1.2 Georgia,"Noto Serif TC",serif}.surface-title small,.surface-title span{color:#9b9a96;font-size:11px}.asset-layout{display:grid;grid-template-columns:1.2fr .8fr .85fr;gap:12px}.drop-zone,.shot-guide,.asset-example{border:1px solid #383a3c;border-radius:6px;min-height:128px;padding:14px;background:#0f1113}.drop-zone{border-style:dashed;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;text-align:center}.drop-zone .upload-icon{font-size:29px;color:#92979a}.drop-zone small,.drop-zone em,.asset-example small{display:block;color:#858789;font-size:10px;margin-top:6px;font-style:normal}.shot-guide ul{margin:10px 0 0;padding-left:18px;color:#a8a7a3;font-size:11px;line-height:1.9}.asset-example{display:flex;flex-direction:column;align-items:center;justify-content:center;color:#8c8e90}.asset-example span{font-size:30px}.privacy-line{display:flex;justify-content:space-between;color:#979694;font-size:10px;margin:12px 0 0}.visually-hidden{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important}.voice-console{position:relative;border:1px solid #343739;border-radius:7px;padding:18px 105px 52px 18px;min-height:128px;background:#0d0f10}.voice-status{font-size:11px;color:#aaa}.voice-status>span{display:inline-block;width:8px;height:8px;border-radius:50%;background:#c78349;margin-right:8px}.voice-timer{position:absolute;top:18px;left:42%;font-variant-numeric:tabular-nums}.voice-timer strong{font:500 23px/1 Georgia,serif}.voice-timer small{color:#777}.waveform{color:#d68b4b;letter-spacing:2px;margin-top:35px;white-space:nowrap;overflow:hidden}.record-orb{position:absolute;right:28px;top:35px;width:62px;height:62px;border-radius:50%;border:2px solid #dc9558;background:#17191a;color:white;box-shadow:0 0 0 6px rgba(216,149,88,.08),0 0 28px rgba(216,149,88,.25);cursor:pointer}.voice-actions{position:absolute;left:14px;right:14px;bottom:10px;display:flex;gap:10px}.home-voice>.consent-line{font-size:10px;margin-top:10px;color:#999}/* the closing action of the brand page, kept in reach the same way the script
    and timeline pages keep theirs: the form above it is taller than the frame */
@@ -5021,6 +5024,63 @@ async function microFixScript(p,violations){
   for(const f of (fixed.shots||[])){ const s=p.shots.find(x=>x.id===Number(f.id)); if(s&&f.voiceover)s.voiceover=String(f.voiceover); }
   return p;
 }
+function dataUrlToB64(u){ const i=String(u).indexOf(","); return i>=0?String(u).slice(i+1):String(u); }
+function shrinkToPngB64(dataUrl,maxW){
+  return new Promise(res=>{
+    const img=new Image();
+    img.onload=()=>{ try{
+      const sc=Math.min(1,(maxW||480)/img.width);
+      const c=document.createElement("canvas");
+      c.width=Math.max(1,Math.round(img.width*sc)); c.height=Math.max(1,Math.round(img.height*sc));
+      c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+      res(dataUrlToB64(c.toDataURL("image/png")));
+    }catch(e){res(null);} };
+    img.onerror=()=>res(null);
+    img.src=dataUrl;
+  });
+}
+async function storyboardFrame(prompt,refs){
+  const r=await window.IRIS_SUPABASE.invoke("storyboard",{body:{prompt,references:(refs||[]).filter(Boolean).slice(0,3)}});
+  if(!r||!r.image) throw new Error("未取得示意圖");
+  return `data:${r.mime||"image/png"};base64,${r.image}`;
+}
+let sbRunning=false;
+async function generateStoryboardFrames(onlyId){
+  if(sbRunning)return;
+  const shots=state.project?.shots||[];
+  const st=$("#sb-status");
+  if(!shots.length){ if(st){st.className="status-line err";st.textContent="✗ 請先生成腳本";} return; }
+  if(!window.IRIS_SUPABASE?.configured?.()||!window.IRIS_SUPABASE.user()){ if(st){st.className="status-line err";st.textContent="✗ 請先登入";} return; }
+  sbRunning=true;
+  const consistency=`${state.project?.anchor||""}
+【一致性鐵律】整個分鏡系列屬於同一支影片:同一位主角、同一件服裝、同一個場地、同一種光線色溫與畫質。附上的參考圖是已定稿的分鏡與場地——人物長相、髮型、衣著、空間陳設必須與參考圖完全一致,只允許改變動作與構圖。
+【禁令】畫面中不得出現任何文字、字母、數字、Logo、招牌字。9:16 直式,寫實手持 UGC 質感,不要棚拍廣告感。`;
+  const brandRefs=[];
+  for(const a of (state.brandAssets||[]).slice(0,2)){ const b=await shrinkToPngB64(typeof a==="string"?a:a.url,480); if(b)brandRefs.push(b); }
+  const targets=onlyId?shots.filter(s=>s.id===onlyId):shots;
+  let done=0;
+  try{
+    for(const shot of targets){
+      genStage(st,`分鏡示意圖 ${done+1}/${targets.length}(鏡 ${shot.id}):生成中(前後鏡互鎖一致性)…`,14);
+      const refs=[];
+      const anchorF=state.frames[shots[0].id];
+      const idx=shots.indexOf(shot);
+      const prevF=idx>0?state.frames[shots[idx-1].id]:null;
+      if(anchorF&&shot.id!==shots[0].id)refs.push(await shrinkToPngB64(anchorF,480));
+      if(prevF&&prevF!==anchorF)refs.push(await shrinkToPngB64(prevF,480));
+      for(const b of brandRefs){ if(refs.length<3)refs.push(b); }
+      const prompt=`${consistency}\n【本鏡畫面】${shot.action_prompt||shot.img_prompt||"品牌日常實景"}`;
+      const url=await storyboardFrame(prompt,refs);
+      state.frames[shot.id]=url; try{ delete frameImgCache[shot.id]; }catch(e){}
+      const cellEl=document.querySelector(`[data-scene-row="${shot.id}"] .script-visual`);
+      if(cellEl){ let im=cellEl.querySelector(".sb-thumb"); if(!im){ im=document.createElement("img"); im.className="sb-thumb"; im.alt=`鏡 ${shot.id} 示意圖`; cellEl.appendChild(im);} im.src=url; const one=cellEl.querySelector("[data-sb-one]"); if(one)one.textContent="重生示意圖"; }
+      done++;
+    }
+    if(st){st.className="status-line ok";st.textContent=`✓ 示意圖完成 ${done}/${targets.length}。生成影片時會以這些畫面為各段基準,所見即所得。`;}
+  }catch(e){
+    if(st){st.className="status-line err";st.textContent=`✗ 第 ${done+1} 張失敗:${e.message}(已完成的已保留,可再按一次續跑)`;}
+  }finally{ sbRunning=false; }
+}
 function genStage(el,text,expectSec){
   if(!el)return;
   el.className="status-line run";
@@ -6848,6 +6908,12 @@ async function runQueueH3(){
     if(prevUrl) content.push({ type:"video_url", video_url:{url:prevUrl}, role:"reference_video" });
     const voiceRef = state.voiceSampleUrl || state.voiceSample;
     if(voiceRef) content.push({ type:"audio_url", audio_url:{url:voiceRef}, role:"reference_audio" });
+    const segFrame = state.frames[list[0]?.id];
+    if(segFrame){
+      content.push({ type:"image_url", image_url:{url:segFrame}, role:"reference_image" });
+      content.push({ type:"text", text:"【首幀鎖定】最後一張附圖是本段第一鏡已定稿的分鏡示意圖:人物長相、服裝、場地、光線必須與它完全一致,開場畫面盡量重現該構圖。" });
+      glog(`  已附本段首幀示意圖(鏡 ${list[0].id}),影片將沿用定稿畫面`);
+    }
     try{
       const taskId = await h3Create(content, dur);
       glog(`  任務 ${taskId},生成中(通常 2-8 分鐘)…`);
@@ -9255,7 +9321,11 @@ function renderScriptLines(findings){
     return `<div class="script-line ${isFlagged?"flagged":""}" data-scene-row="${escapeHtml(shot.id)}"><span class="handle" aria-hidden="true">${ico("grip")}</span>`
       +`<span class="scene-no">${String(shot.id).padStart(2,"0")}</span>`
       +cell("voiceover",shot.voiceover||"","script-body","旁白／對白")
-      +cell("action_prompt",shot.action_prompt||"","script-visual","畫面指示")
+      +(()=>{ /* 畫面指示格:附示意圖縮圖與單鏡重生 */
+        const base=cell("action_prompt",shot.action_prompt||"","script-visual","畫面指示");
+        const f=state.frames[shot.id];
+        return base.replace(/<\/div>$/,`${f?`<img class="sb-thumb" src="${f}" alt="鏡 ${shot.id} 示意圖">`:""}<button type="button" class="btn small ghost sb-one" data-sb-one="${escapeHtml(shot.id)}">${f?"重生示意圖":"生成示意圖"}</button></div>`);
+      })()
       +cell("caption",shot.caption?.main||"","script-caption","字幕（建議）")
       +cell("img_prompt",shot.img_prompt||"","script-need","素材需求")
       +`<span class="script-dur" data-label="時長"><select data-scene-dur="${escapeHtml(shot.id)}">${[4,5,6,8].map(v=>`<option value="${v}" ${Number(shot.dur)===v?"selected":""}>${v}.0s</option>`).join("")}</select></span>`
@@ -9350,8 +9420,10 @@ function installScriptReview(options){
     +`<div class="rail-steps">${RAIL_ITEMS.map(item=>`<button type="button" class="rail-step ${item.key==="script"?"active":""}" data-rail-go="${item.step}" data-rail-workspace="${item.workspace||""}"><span class="rail-icon">${ico(item.icon)}</span><span>${escapeHtml(item.label)}${item.note?`<small>${escapeHtml(item.note)}</small>`:""}</span></button>`).join("")}</div>`
     +`<hr><p class="rail-label">場景清單</p><div class="rail-scenes" id="script-rail-scenes"></div></aside>`
    +`<section class="script-main">${state.project&&state.project._real?"":`<div class="trend-banner warn" style="margin-bottom:10px">${ico("alert")}<span><b>目前顯示的是示範腳本(佔位)。</b>展開下方「進階腳本工具」選一種風格並按「生成品牌腳本+分鏡」,這裡就會換成你的品牌真實腳本。</span></div>`}<div class="script-main-head"><div><h3>腳本<small>（來自分析結構：爆款抽象結構）</small></h3><p class="hint">將爆款結構轉寫為原創商業短影音腳本，並即時內容審核與優化。</p></div>`
-     +`<div class="script-head-tools"><div><span>腳本版本</span><div class="version-pills" id="script-versions">${SCRIPT_DIRECTIONS.map((name,index)=>`<button type="button" class="${index===scriptDirection?"active":""}" data-script-version="${index}" aria-label="原創方向 ${name}">${index+1}</button>`).join("")}</div></div>`
+     +`<div class="script-head-tools"><div><span>分鏡示意圖</span><div><button type="button" class="btn small teal" id="btn-make-sb" title="每鏡生成一張 9:16 示意圖,前後鏡互鎖一致性;生成影片時沿用">生成示意圖</button></div></div>`
+     +`<div><span>腳本版本</span><div class="version-pills" id="script-versions">${SCRIPT_DIRECTIONS.map((name,index)=>`<button type="button" class="${index===scriptDirection?"active":""}" data-script-version="${index}" aria-label="原創方向 ${name}">${index+1}</button>`).join("")}</div></div>`
      +`<div><span>差異檢視</span><label class="switch"><input type="checkbox" id="script-diff-toggle"><i></i></label></div></div></div>`
+     +`<div id="sb-status" class="status-line" role="status" aria-live="polite"></div>`
      +`<div class="script-grid"><div class="script-grid-head"><span></span><span>場次</span><span>旁白／對白</span><span>畫面指示</span><span>字幕（建議）</span><span>時長</span><span></span></div><div id="script-lines"></div></div>`
      +`<div class="script-compare hidden" id="script-compare"></div>`
      +`<div class="script-grid-foot"><button class="btn small ghost" type="button" id="btn-script-add-scene">${ico("plus")}新增場次</button><span id="script-totals"></span></div></section>`
@@ -9381,6 +9453,8 @@ function installScriptReview(options){
     }
     const sceneAction=event.target.closest("[data-scene-action]");
     if(sceneAction){handleSceneAction(sceneAction.dataset.sceneAction,sceneAction.dataset.sceneId);return;}
+    const sbOne=event.target.closest("[data-sb-one]");
+    if(sbOne){generateStoryboardFrames(Number(sbOne.dataset.sbOne));return;}
     const version=event.target.closest("[data-script-version]");
     if(version){
       if(state.project&&state.project._real){
@@ -9401,6 +9475,7 @@ function installScriptReview(options){
     const filter=event.target.closest("[data-review-filter]");
     if(filter){scriptFilter=filter.dataset.reviewFilter;renderScriptReview();return;}
   });
+  $("#btn-make-sb")?.addEventListener("click",()=>generateStoryboardFrames());
   $("#script-diff-toggle").addEventListener("change",event=>{
     scriptShowDiff=event.target.checked;
     document.body.classList.toggle("script-diff",scriptShowDiff);
