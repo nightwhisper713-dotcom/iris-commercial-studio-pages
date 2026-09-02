@@ -8146,6 +8146,50 @@ const TREND_STRUCTURE_TAGS={hook:["HOOK"],proof:["proof"],contrast:["contrast"],
 let trendFocused=null;
 let trendSearched=false;
 let lastTrendMode="keyword";
+let liveTrendRefs=null;
+function trendRefs(){return liveTrendRefs||ACCEPTANCE_REFS;}
+function fmtDur(sec){ if(sec==null)return "—"; const m=Math.floor(sec/60),s=Math.round(sec%60); return `${m}:${String(s).padStart(2,"0")}`; }
+function fmtAge(iso){ if(!iso)return "—"; const d=Math.max(0,Math.round((Date.now()-new Date(iso).getTime())/864e5)); return d<1?"今天":d<30?`${d} 天前`:d<365?`${Math.round(d/30)} 個月前`:`${Math.round(d/365)} 年前`; }
+function mapTrendVideo(v,i,regionCode,language){
+  const views=v.viewCount, likes=v.likeCount;
+  const days=v.publishedAt?Math.max(1,(Date.now()-new Date(v.publishedAt).getTime())/864e5):null;
+  const freshness=days==null?0:Math.max(1,Math.round(100*Math.exp(-days/120)));
+  const engagement=(views&&likes)?Math.min(99,Math.round((likes/views)*1500)):0;
+  const velocity=(views&&days)?Math.min(99,Math.round(Math.log10(1+views/days)*25)):0;
+  const relevance=Math.max(40,95-i*4);
+  return { id:v.videoId, title:v.title||"(無標題)", hook:v.title||"", channel:v.channelTitle||"—",
+    thumb:v.thumbnail||"", region:regionCode||"TW", language:language||"繁中", age:fmtAge(v.publishedAt),
+    duration:fmtDur(v.durationSeconds), freshness, engagement, velocity, relevance,
+    confidence:0, tags:[], live:true, videoUrl:`https://www.youtube.com/watch?v=${encodeURIComponent(v.videoId)}`,
+    summary:`真實資料:觀看 ${views==null?"—":views.toLocaleString()}・讚 ${likes==null?"—":likes.toLocaleString()}・${v.channelTitle||"—"}。缺少的數字表示平台未提供,不捏造。` };
+}
+function trendQueryFor(mode){
+  const industryText=String(state.brand?.industry||"")+" "+($("#trend-kw")?.value||"");
+  const hit=INDUSTRY_KWS.find(g=>g.match.some(m=>industryText.includes(m)));
+  if(mode==="global"){
+    const manual=$("#global-industry")?.value.trim();
+    const q=manual||hit?.en?.[0]||($("#trend-kw")?.value||"").trim();
+    const parts=($("#global-locale")?.value||"US|en").split("|");
+    return q?{query:q,regionCode:parts[0]||"US",relevanceLanguage:parts[1]||"en",language:parts[1]||"en"}:null;
+  }
+  if(mode==="competitor"){
+    const q=hit?.kws?.[0]||String(state.brand?.industry||"").trim();
+    return q?{query:q,regionCode:"TW",relevanceLanguage:"zh-Hant",language:"繁中"}:null;
+  }
+  const q=($("#trend-kw")?.value||"").trim()||hit?.kws?.[0]||String(state.brand?.industry||"").trim();
+  return q?{query:q,regionCode:"TW",relevanceLanguage:"zh-Hant",language:"繁中"}:null;
+}
+function renderGlobalKwChips(){
+  const input=$("#global-industry");if(!input)return;
+  let box=$("#global-kw-chips");
+  if(!box){ box=document.createElement("div"); box.id="global-kw-chips"; box.style.cssText="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"; input.closest(".trend-field")?.parentNode?.insertBefore(box,input.closest(".trend-field").nextSibling); }
+  const industryText=String(state.brand?.industry||"");
+  const hit=INDUSTRY_KWS.find(g=>g.match.some(m=>industryText.includes(m)));
+  const kws=hit?.en||INDUSTRY_KWS.flatMap(g=>g.en.slice(0,1)).slice(0,6);
+  box.innerHTML=(hit?`<span class="hint" style="margin:0;width:100%">依你的產業「${escapeHtml(industryText)}」建議:</span>`:`<span class="hint" style="margin:0;width:100%">常用英文產業詞(點一下帶入):</span>`)
+    +kws.map(k=>`<button type="button" class="chip" data-gkw="${escapeHtml(k)}" style="cursor:pointer">${escapeHtml(k)}</button>`).join("");
+  box.querySelectorAll("[data-gkw]").forEach(b=>b.addEventListener("click",()=>{ input.value=b.dataset.gkw; input.focus(); }));
+}
 function trendMode(){return document.body.dataset.trendMode||"keyword";}
 function trendTag(t){return TREND_TAG_LABELS[t]||t;}
 function trendBanner(kind,icon,text,extra){
@@ -8157,9 +8201,9 @@ function trendVisibleRefs(){
   const sort=$("#trend-sort")?.value||"recommended";
   const region=($("#global-locale")?.value||"").split("|")[0];
   const structure=$("#global-structure")?.value||"";
-  let rows=ACCEPTANCE_REFS.slice();
+  let rows=trendRefs().slice();
   if(region) rows=rows.filter(r=>r.region===region);
-  if(structure){const want=TREND_STRUCTURE_TAGS[structure]||[];rows=rows.filter(r=>r.tags.some(t=>want.includes(t)));}
+  if(structure){const want=TREND_STRUCTURE_TAGS[structure]||[];rows=rows.filter(r=>!(r.tags&&r.tags.length)||r.tags.some(t=>want.includes(t)));}
   const key={recommended:"relevance",fresh:"freshness",engagement:"engagement",velocity:"velocity"}[sort]||"relevance";
   return rows.slice().sort((x,y)=>y[key]-x[key]);
 }
@@ -8195,7 +8239,9 @@ function renderAcceptanceRefs(mode="keyword"){
     syncTrendResultCount();renderAcceptanceSelection();return;
   }
   list.innerHTML=`<div class="trend-grid">${rows.map(trendCardMarkup).join("")}</div>`+
-    `<p class="trend-source-note">${ico("shield")}未連接外部資料來源，不捏造真實觀看數；候選為可審查 MOCK。</p>`;
+    (liveTrendRefs
+      ? `<p class="trend-source-note">${ico("shield")}真實 YouTube 搜尋結果;缺少的數字表示平台未提供,不捏造。</p>`
+      : `<p class="trend-source-note">${ico("shield")}未連接外部資料來源，不捏造真實觀看數；候選為可審查 MOCK。</p>`);
   list.querySelectorAll("[data-pick-ref]").forEach(input=>input.addEventListener("change",()=>{
     const id=input.dataset.pickRef;
     if(input.checked){
@@ -8220,7 +8266,7 @@ function renderAcceptanceRefs(mode="keyword"){
 function focusTrendCandidate(id){
   const empty=$("#preview-empty"),body=$("#preview-body");
   if(!empty||!body)return;
-  const ref=ACCEPTANCE_REFS.find(r=>r.id===id)||null;
+  const ref=trendRefs().find(r=>r.id===id)||null;
   trendFocused=ref?ref.id:null;
   empty.classList.toggle("hidden",!!ref);
   body.classList.toggle("hidden",!ref);
@@ -8231,8 +8277,10 @@ function focusTrendCandidate(id){
   if(!ref)return;
   $("#preview-title").textContent=ref.title;
   $("#preview-channel").textContent=ref.channel;
-  $("#preview-subs").textContent="可審查 MOCK 資料，未連接外部帳號";
-  $("#preview-source").innerHTML=ico("play")+"來源：YouTube Shorts（可審查 MOCK）";
+  $("#preview-subs").textContent=ref.live?"真實 YouTube 資料(缺少的數字不捏造)":"可審查 MOCK 資料，未連接外部帳號";
+  $("#preview-source").innerHTML=ref.live
+    ? ico("play")+`來源：<a href="${escapeHtml(ref.videoUrl)}" target="_blank" rel="noopener noreferrer" style="color:inherit">YouTube Shorts(開新分頁觀看)</a>`
+    : ico("play")+"來源：YouTube Shorts（可審查 MOCK）";
   $("#preview-metrics").innerHTML=[`結構分 ${ref.relevance}`,`互動 ${ref.engagement}`,ref.age,ref.region,ref.language]
     .map(v=>`<span class="chip">${escapeHtml(String(v))}</span>`).join("");
   $("#preview-tags").innerHTML=ref.tags.map(t=>`<span class="chip">${escapeHtml(trendTag(t))}</span>`).join("");
@@ -8264,12 +8312,12 @@ function dropTrendSelection(id){
   if(index>=0){state.referenceCandidates.splice(index,1);renderReferenceSelection();}
 }
 function renderAcceptanceSelection(){
-  const refs=ACCEPTANCE_REFS.filter(r=>acceptanceSelected.includes(r.id));
+  const refs=trendRefs().filter(r=>acceptanceSelected.includes(r.id));
   renderSelectionTray(refs.map(r=>({id:r.id,title:r.title,thumb:r.thumb})));
 }
 function ensureTrendPreview(){
   const pane=$("#trend-preview-pane");
-  if(pane)focusTrendCandidate(trendFocused||acceptanceSelected[0]||ACCEPTANCE_REFS[0]?.id);
+  if(pane)focusTrendCandidate(trendFocused||acceptanceSelected[0]||trendRefs()[0]?.id);
   return pane;
 }
 
@@ -8280,27 +8328,35 @@ function resetTrendFilters(){
   setTrendState("");
   if(trendSearched)renderAcceptanceRefs(lastTrendMode);
 }
-function runTrendSearch(mode){
+async function runTrendSearch(mode){
   const list=$("#trend-list");if(!list)return;
   const button=mode==="global"?$("#btn-global-ref"):mode==="competitor"?$("#btn-auto-competitors"):$("#trend-search");
   if(!navigator.onLine){syncTrendNetworkState();return;}
   if(button){button.setAttribute("aria-busy","true");button.disabled=true;}
   list.innerHTML=`<div class="trend-skeleton" aria-hidden="true">${"<span></span>".repeat(5)}</div>`;
-  setTrendState(trendBanner("info","refresh","正在整理候選影片…"));
-  window.setTimeout(()=>{
-    if(button){button.removeAttribute("aria-busy");button.disabled=false;}
-    try{
-      renderAcceptanceRefs(mode);
-      setTrendState(trendBanner("info","check-circle",`已載入 ${$("#trend-list").querySelectorAll(".trend-card").length} 支可審查 MOCK 候選。`));
-      const status=$("#comp-status");
-      if(status)status.textContent="已載入可審查 MOCK；外部來源仍 SECURITY_LOCKED。";
-    }catch(err){
-      list.innerHTML="";
-      setTrendState(trendBanner("err","alert","搜尋失敗："+escapeHtml(err.message||String(err)),
-        '<button class="btn ghost small" type="button" data-trend-retry="1">重試</button>'));
-      $("#trend-state").querySelector("[data-trend-retry]").addEventListener("click",()=>runTrendSearch(mode));
-    }
-  },320);
+  setTrendState(trendBanner("info","refresh","正在搜尋 YouTube Shorts 候選…"));
+  const finish=()=>{ if(button){button.removeAttribute("aria-busy");button.disabled=false;} };
+  try{
+    const q=trendQueryFor(mode);
+    if(!q){ finish(); list.innerHTML=""; setTrendState(trendBanner("warn","alert",mode==="global"?"請輸入英文產業詞,或先在步驟 1 建立品牌(會自動帶入建議詞)。":"請先輸入關鍵字,或在步驟 1 建立品牌。")); return; }
+    if(!window.IRIS_SUPABASE?.configured?.()||!window.IRIS_SUPABASE.user()) throw Object.assign(new Error("請先登入,搜尋才會使用真實資料。"),{code:"AUTH_REQUIRED"});
+    const r=await window.IRIS_SUPABASE.invoke("trend",{body:{action:"search",input:{mode:mode==="global"?"global":"keyword",query:q.query,regionCode:q.regionCode,relevanceLanguage:q.relevanceLanguage,maxResults:10}}});
+    finish();
+    const vids=(r&&r.videos)||[];
+    if(!vids.length){ liveTrendRefs=null; list.innerHTML=""; setTrendState(trendBanner("warn","alert",`「${escapeHtml(q.query)}」沒有找到結果${r?.emptyReason?`(${escapeHtml(r.emptyReason)})`:""},換個關鍵字試試。`)); syncTrendResultCount(); return; }
+    liveTrendRefs=vids.map((v,i)=>mapTrendVideo(v,i,q.regionCode,q.language));
+    acceptanceSelected=[]; trendFocused=null;
+    renderAcceptanceRefs(mode);
+    setTrendState(trendBanner("info","check-circle",`已載入 ${liveTrendRefs.length} 支真實候選(${r.fromCache?"當日快取,0 配額":"即時搜尋"}):「${escapeHtml(q.query)}」。`));
+    const status=$("#comp-status"); if(status)status.textContent=`已依「${q.query}」載入真實候選。`;
+  }catch(err){
+    finish();
+    liveTrendRefs=null;
+    try{ renderAcceptanceRefs(mode); }catch(e){ list.innerHTML=""; }
+    setTrendState(trendBanner("warn","alert","外部搜尋暫不可用:"+escapeHtml(err.message||String(err))+" 以下先顯示可審查 MOCK 候選。",
+      '<button class="btn ghost small" type="button" data-trend-retry="1">重試</button>'));
+    $("#trend-state").querySelector("[data-trend-retry]")?.addEventListener("click",()=>runTrendSearch(mode));
+  }
 }
 const TREND_NETWORK_CONTROLS=["#trend-search","#btn-global-ref","#btn-auto-competitors","#btn-scan-channels","#btn-parse-ref","#btn-tiktok-add","#btn-tiktok-login"];
 function syncTrendNetworkState(){
@@ -8415,20 +8471,23 @@ $("#btn-preview-expand").addEventListener("click",()=>{
   button.innerHTML=(open?"收合":"展開")+ico("chevron-down");
 });
 $("#btn-preview-subscribe").addEventListener("click",()=>{
-  const ref=ACCEPTANCE_REFS.find(r=>r.id===trendFocused);
+  const ref=trendRefs().find(r=>r.id===trendFocused);
   const status=$("#preview-subscribe-status");
   if(ref&&ref.channelUrl){window.open(ref.channelUrl,"_blank","noopener");status.textContent="";return;}
+  if(ref&&ref.live&&ref.videoUrl){window.open(ref.videoUrl,"_blank","noopener");status.textContent="";return;}
   status.textContent="訂閱需要登入該平台帳號。目前候選為可審查 MOCK，未連接外部帳號。";
   status.className="status-line";
 });
 $("#btn-preview-pick").addEventListener("click",()=>{
-  const id=trendFocused||ACCEPTANCE_REFS[0]?.id;
+  const id=trendFocused||trendRefs()[0]?.id;
   if(id&&!acceptanceSelected.includes(id))acceptanceSelected=[...acceptanceSelected.slice(0,2),id];
   renderAcceptanceSelection();
   renderStructureAnalysis();
 });
 new MutationObserver(syncTrendResultCount).observe($("#trend-list"),{childList:true,subtree:true});
 renderKwChips(state.brand?.industry||"");
+renderGlobalKwChips();
+document.querySelectorAll("[data-trend-mode]").forEach(b=>b.addEventListener("click",()=>{ if(b.dataset.trendMode==="global")renderGlobalKwChips(); }));
 syncTrendNetworkState();
 syncPreviewPlayButton();
 renderAcceptanceSelection();
