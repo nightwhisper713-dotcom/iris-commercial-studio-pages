@@ -9555,6 +9555,7 @@ function installScriptReview(options){
      +`<button class="btn ghost" type="button" id="btn-script-alt">儲存草稿</button>`
      +`<button class="btn teal" type="button" id="btn-script-pass">通過審核，建立素材清單 ${ico("arrow-right")}</button></footer>`;
 
+  if(!box._clickWired){box._clickWired=true;
   box.addEventListener("click",event=>{
     const railGo=event.target.closest("[data-rail-go]");
     if(railGo){
@@ -9596,6 +9597,7 @@ function installScriptReview(options){
     const filter=event.target.closest("[data-review-filter]");
     if(filter){scriptFilter=filter.dataset.reviewFilter;renderScriptReview();return;}
   });
+  } /* end box._clickWired once-guard */
   $("#btn-make-sb")?.addEventListener("click",()=>generateStoryboardFrames());
   $("#script-diff-toggle").addEventListener("change",event=>{
     scriptShowDiff=event.target.checked;
@@ -9605,8 +9607,10 @@ function installScriptReview(options){
   });
   $("#btn-review-rewrite-all").addEventListener("click",scriptRewriteAll);
   $("#btn-review-undo").addEventListener("click",scriptUndoLast);
-  window.addEventListener("online",()=>{if(scriptReviewPhase==="offline"){scriptSetPhase("ready");renderScriptReview();}});
-  window.addEventListener("offline",()=>{scriptSetPhase("offline");renderScriptReview();});
+  if(!installScriptReview._winWired){installScriptReview._winWired=true; /* window 監聽器同樣只掛一次 */
+    window.addEventListener("online",()=>{if(scriptReviewPhase==="offline"){scriptSetPhase("ready");renderScriptReview();}});
+    window.addEventListener("offline",()=>{scriptSetPhase("offline");renderScriptReview();});
+  }
   $("#btn-script-add-scene").addEventListener("click",()=>{
     const next=(state.project.shots.at(-1)?.id||0)+1;
     state.project.shots.push({id:next,dur:4,action_prompt:"",caption:{main:"",sub:""},voiceover:"",img_prompt:""});
