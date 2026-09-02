@@ -9144,9 +9144,43 @@ function reviewScript(project,brand){
   });
   return findings;
 }
+let cloudReviewFindings=[];
+let cloudReviewAt=null;
+async function runCloudReview(){
+  const shots=state.project?.shots||[];
+  const sentences=[];
+  for(const shot of shots){
+    for(const field of ["voiceover","caption"]){
+      const text=field==="caption"?String(shot.caption?.main||""):String(shot[field]||"");
+      if(text.trim())sentences.push({id:`${shot.id}:${field}`,text:text.slice(0,400),field});
+    }
+  }
+  if(!sentences.length)return 0;
+  const r=await window.IRIS_SUPABASE.invoke("gemini",{body:{
+    task:"review",
+    input:{ sentences:sentences.slice(0,40), industry:String(state.brand?.industry||"").slice(0,80),
+      banned:(state.brand?.banned||[]).slice(0,40), locale:"zh-Hant" },
+    allowLocalFallback:false
+  }});
+  const byId=new Map(sentences.map(s=>[s.id,s]));
+  cloudReviewFindings=(r?.result?.findings||[]).map(f=>{
+    const src=byId.get(String(f.sentenceId))||{};
+    const [sceneId,field]=String(f.sentenceId).split(":");
+    return { id:`cloud-${f.sentenceId}-${String(f.category||"").slice(0,20)}`, ruleId:"cloud",
+      severity:["high","medium","low"].includes(f.severity)?f.severity:"medium",
+      sceneId:Number(sceneId)||sceneId, field:field||"voiceover", fieldLabel:reviewFieldLabel(field||"voiceover"),
+      category:`雲端審核:${f.category||"語意風險"}`, original:src.text||"",
+      reason:f.reason||"", suggestion:f.suggestion||"", rationale:"雲端語意審核建議,保留原意並降低風險。" };
+  });
+  cloudReviewAt=new Date();
+  return cloudReviewFindings.length;
+}
 function reviewOpenFindings(){
   const decided=new Set((state.reviewAudit||[]).map(entry=>entry.findingId));
-  return reviewScript(state.project,state.brand).filter(finding=>!decided.has(finding.id));
+  const local=reviewScript(state.project,state.brand);
+  const localIds=new Set(local.map(f=>`${f.sceneId}:${f.field}:${f.severity}`));
+  const cloud=cloudReviewFindings.filter(f=>!localIds.has(`${f.sceneId}:${f.field}:${f.severity}`));
+  return local.concat(cloud).filter(finding=>!decided.has(finding.id));
 }
 function contentRiskScan(){
   const open=reviewOpenFindings().filter(finding=>finding.severity==="high");
@@ -9309,7 +9343,21 @@ function renderScriptReview(){
   gate.innerHTML=counts.high?`${ico("alert")}<span>高風險問題需處理後才能通過審核。</span>`:`${ico("check-circle")}<span>已可通過審核並建立素材清單。</span>`;
   $("#btn-script-pass").disabled=counts.high>0;
   $("#btn-script-pass").title=counts.high?"高風險問題需處理後才能通過審核。":"";
-  $("#btn-script-recheck").addEventListener("click",()=>{scriptSetPhase("ready");renderScriptReview();$("#rw-status").textContent="已重新檢核目前腳本。";});
+  $("#btn-script-recheck").addEventListener("click",async ()=>{
+    if(window.IRIS_SUPABASE?.configured?.()&&window.IRIS_SUPABASE.user()){
+      scriptSetPhase("checking");renderScriptReview();
+      try{
+        const n=await runCloudReview();
+        scriptSetPhase("ready");renderScriptReview();
+        $("#rw-status").textContent=`已完成本機+雲端逐句審核${n?`,雲端新增 ${n} 項建議`:",雲端未發現額外風險"}。`;
+      }catch(e){
+        scriptSetPhase("ready");renderScriptReview();
+        $("#rw-status").textContent=`本機檢核完成;雲端審核暫不可用(${e.message})。`;
+      }
+      return;
+    }
+    scriptSetPhase("ready");renderScriptReview();$("#rw-status").textContent="已重新檢核目前腳本(本機規則;登入後可加跑雲端語意審核)。";
+  });
   const rewriteAll=$("#btn-review-rewrite-all"),undo=$("#btn-review-undo");
   if(rewriteAll)rewriteAll.disabled=!findings.some(finding=>finding.suggestion);
   if(undo)undo.disabled=!scriptUndoStack.length;
@@ -9445,7 +9493,7 @@ function installScriptReview(options){
      +`<div class="review-bulk"><button class="btn small ghost" type="button" id="btn-review-rewrite-all">${ico("sparkle")}全部安全改寫</button><button class="btn small ghost" type="button" id="btn-review-undo">${ico("undo")}復原</button></div>`
      +`<div class="review-tabs" id="review-tabs"></div>`
      +`<div class="review-findings" id="review-findings"></div><p class="review-gate" id="review-gate"></p>`
-     +`<p class="review-engine">${ico("shield")}本頁使用本機規則引擎即時檢核；雲端 AI 內容審核需登入與授權，目前為 SECURITY_LOCKED，未送出任何內容。</p></aside>`
+     +`<p class="review-engine">${ico("shield")}打字時以本機規則引擎即時檢核；按「重新檢核」會加跑雲端語意逐句審核(需登入)${cloudReviewAt?`。上次雲端審核:${String(cloudReviewAt.getHours()).padStart(2,"0")}:${String(cloudReviewAt.getMinutes()).padStart(2,"0")}`:"，本腳本尚未跑過雲端審核"}。</p></aside>`
    +`<footer class="script-actionbar"><div class="saved"><span>${ico("check")}已自動儲存 ${escapeHtml(scriptSavedAt)}</span><span id="script-saved-note">上次儲存：剛剛</span></div>`
      +`<button class="btn ghost" type="button" id="btn-script-alt">儲存草稿</button>`
      +`<button class="btn teal" type="button" id="btn-script-pass">通過審核，建立素材清單 ${ico("arrow-right")}</button></footer>`;
