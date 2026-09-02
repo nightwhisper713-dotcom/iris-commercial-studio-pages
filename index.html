@@ -4250,19 +4250,16 @@ function initPricingMock(){
   renderEntitlement();
 }
 
-async function analysisProxyFetch(path, body){
-  const modelMatch = String(path||"").match(/^\/([^:]+):generateContent$/);
-  if(!modelMatch) throw new Error("此 API 操作尚未開放安全代理");
-  return window.IRIS_SUPABASE.invoke("gemini",{body:{action:"generateContent",purpose:"analysis",body},accessToken:state.sessionAccessToken,idempotencyKey:crypto.randomUUID()});
-}
 async function irisGenerate(purpose, parts, jsonMode){
-  const body = { contents:[{role:"user", parts}], generationConfig:{ temperature:0.8, maxOutputTokens:8192 } };
-  if(jsonMode) body.generationConfig.responseMimeType = "application/json";
-  const data = await analysisProxyFetch(`/${purpose}:generateContent`, body);
-  const cand = data.candidates && data.candidates[0];
-  const text = cand && cand.content && cand.content.parts && cand.content.parts.map(p=>p.text||"").join("");
-  if(!text) throw new Error("模型未回傳內容:" + JSON.stringify(data).slice(0,200));
-  return text;
+  const prompt = (parts||[]).map(p=>p.text||"").filter(Boolean).join("\n");
+  if(!prompt) throw new Error("這種輸入(影片/圖片)目前不支援,請改用文字。");
+  const r = await window.IRIS_SUPABASE.invoke("gemini",{body:{
+    task:"script_creative",
+    input:{ prompt: prompt.slice(0,11000) },
+    allowLocalFallback:false
+  }});
+  if(!r||!r.result) throw new Error("模型未回傳內容");
+  return JSON.stringify(r.result);
 }
 function parseJsonLoose(text){
   const m = text.match(/```json\s*([\s\S]*?)```/) || text.match(/```\s*([\s\S]*?)```/);
@@ -5035,6 +5032,7 @@ $("#btn-rewrite").addEventListener("click", async ()=>{
       : `✓ 已通過商業檢查|hook:${p.hook_type||"?"}|公式:${p.formula||"?"}|暗號:「${p.cta_code||"?"}」|聲線:${p.voice?.gender||"?"}·${p.voice?.style||"?"}`;
     $("#rw-status").textContent = passMsg;
     $("#rw-status").className = violations.length? "status-line err" : "status-line ok";
+    try{ installScriptReview({keepProject:true,riskDemo:false}); }catch(e){}
     blockedCustomerDataFetch(`${SUPABASE_URL}/rest/v1/iris_patterns`, {
       method:"POST",
       headers:{ apikey:SUPABASE_ANON_KEY,
@@ -7372,6 +7370,7 @@ async function generateFromIdea(feedback){
       ? `⚠ 仍有 ${violations.length} 條未過(可在下方寫意見重生):${violations.join(";")}`
       : `✓ 完成|hook:${p.hook_type||"?"}|公式:${p.formula||"?"}|${p.cta_code? "暗號「"+p.cta_code+"」" : "純形象片(無 CTA)"}`;
     st.className = violations.length ? "status-line err" : "status-line ok";
+    try{ installScriptReview({keepProject:true,riskDemo:false}); }catch(e){}
     renderStoryboard(); syncScrub();
     gotoStep(5);
   }catch(e){ st.textContent = "✗ " + e.message; st.className = "status-line err"; }
@@ -9183,7 +9182,7 @@ function syncScriptState(){
 function installScriptReview(options){
   const riskDemo=!options||options.riskDemo!==false;
   scriptSegments=options&&Array.isArray(options.segments)&&options.segments.length?options.segments:null;
-  state.project=scriptBaseProject(riskDemo);
+  state.project=(options&&options.keepProject&&state.project&&Array.isArray(state.project.shots)&&state.project.shots.length)?state.project:scriptBaseProject(riskDemo);
   if(scriptSegments){
     const picked=scriptSegments.map(n=>STRUCTURE_SEGMENTS.find(s=>s.n===n)).filter(Boolean);
     if(picked.length){
@@ -9639,7 +9638,10 @@ $("#btn-final-crumb-review").addEventListener("click",()=>gotoStep(7));
   });
   syncButton();
 })();$("#btn-export-srt").addEventListener("click",()=>{const text=`1\n00:00:00,000 --> 00:00:03,000\nIRIS MOCK 測試交付\n\n2\n00:00:03,000 --> 00:00:06,000\n僅供功能驗收\n`;offerDownload(new Blob([text],{type:"text/plain;charset=utf-8"}),"IRIS_mock.srt");});
-function handleAcceptanceClick(e){const id=e.target.closest("button")?.id;if(!id)return;const modes={"trend-search":"keyword","btn-global-ref":"global","btn-auto-competitors":"competitor","btn-scan-channels":"competitor"};if(modes[id]){e.preventDefault();e.stopImmediatePropagation();runTrendSearch(modes[id]);}if(id==="btn-compare-selected"){e.preventDefault();e.stopImmediatePropagation();runCompareSelected();}if(id==="btn-analyze"){e.preventDefault();e.stopImmediatePropagation();if(state.refSource)runAnalysis();else runCompareSelected();}if(["btn-rewrite","btn-idea-gen"].includes(id)){e.preventDefault();e.stopImmediatePropagation();installScriptReview();$("#rw-status").textContent="已建立 3 個差異方向；目前顯示 A。";}if(id==="btn-tiktok-add"){e.preventDefault();e.stopImmediatePropagation();$("#tiktok-list").innerHTML='<div class="tag-warn">TikTok 來源：SECURITY_LOCKED。連結已在本機驗證格式，但未下載受限制內容。</div>';}if(id==="btn-make-frames"){e.preventDefault();e.stopImmediatePropagation();$("#frames-status").textContent="本機 fixture 已建立；未呼叫圖片 API。";}}
+function handleAcceptanceClick(e){const id=e.target.closest("button")?.id;if(!id)return;const modes={"trend-search":"keyword","btn-global-ref":"global","btn-auto-competitors":"competitor","btn-scan-channels":"competitor"};if(modes[id]){e.preventDefault();e.stopImmediatePropagation();runTrendSearch(modes[id]);}if(id==="btn-compare-selected"){e.preventDefault();e.stopImmediatePropagation();runCompareSelected();}if(id==="btn-analyze"){e.preventDefault();e.stopImmediatePropagation();if(state.refSource)runAnalysis();else runCompareSelected();}if(["btn-rewrite","btn-idea-gen"].includes(id)){
+  const realReady=window.IRIS_SUPABASE?.configured?.()&&window.IRIS_SUPABASE.user()&&(id==="btn-idea-gen"||state.analysis);
+  if(!realReady){e.preventDefault();e.stopImmediatePropagation();installScriptReview();$("#rw-status").textContent="示範腳本(登入並完成拆解後,這顆按鈕會生成真實腳本)。";}
+}if(id==="btn-tiktok-add"){e.preventDefault();e.stopImmediatePropagation();$("#tiktok-list").innerHTML='<div class="tag-warn">TikTok 來源：SECURITY_LOCKED。連結已在本機驗證格式，但未下載受限制內容。</div>';}if(id==="btn-make-frames"){e.preventDefault();e.stopImmediatePropagation();$("#frames-status").textContent="本機 fixture 已建立；未呼叫圖片 API。";}}
 document.addEventListener("click",handleAcceptanceClick,true);
 window.addEventListener("popstate",event=>{const page=Number(event.state&&event.state.page)||Number(new URLSearchParams(location.search).get("demo-step"))||1;gotoStep(page);});
 function irisResolveRoute(params){
