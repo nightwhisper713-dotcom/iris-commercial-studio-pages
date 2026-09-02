@@ -9508,7 +9508,8 @@ function installScriptReview(options){
   scriptSetPhase("ready");
   scriptSnapshotBaseline();
   state.reviewAudit=[];
-  scriptDirection=0;scriptFilter="all";scriptShowDiff=false;
+  if(!(options&&options.keepProject))scriptDirection=0; /* 切換真實版本時保留當前索引,亮燈才會跟著走 */
+  scriptFilter="all";scriptShowDiff=false;
   const stamp=new Date(),pad=n=>String(n).padStart(2,"0");
   scriptSavedAt=`${pad(stamp.getHours())}:${pad(stamp.getMinutes())}`;
   $("#script-json").value=JSON.stringify(state.project,null,2);
