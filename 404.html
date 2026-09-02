@@ -5151,60 +5151,58 @@ function genStage(el,text,expectSec){
   el.className="status-line run";
   el.innerHTML=`<span class="gen-line"><span class="gen-msg"><svg class="ico an-spin" aria-hidden="true"><use href="#i-refresh"></use></svg>${escapeHtml(text)}</span><span class="bar" style="--t:${Math.max(3,expectSec||50)}s"><i></i></span></span>`;
 }
+async function generateOneScript(shotCount,targetSec){
+  const text = await irisGenerate("script-default", [{text: rewritePrompt(shotCount, targetSec)}], true);
+  const p = parseJsonLoose(text);
+  if(!Array.isArray(p.shots) || !p.shots.length) throw new Error("腳本缺 shots");
+  const pd = plannedDurs(p.shots.length);
+  p.shots.forEach((s,i)=>{ s.id = i+1; s.dur = pd[i] || 4; });
+  let violations = validateCommercial(p, state.brand);
+  for(let fix=1; fix<=2 && violations.length; fix++){
+    try{ await microFixScript(p,violations); violations=validateCommercial(p,state.brand); }catch(e){ break; }
+  }
+  p._real = true;
+  p.audio = {music:"user-upload", voiceover:"tts"};
+  const topicNow = ($("#topic-kw")?.value||"").trim();
+  if(topicNow) p.meta = Object.assign({}, p.meta, {topic: topicNow});
+  p._violations = violations;
+  return p;
+}
+function adoptScriptVersion(idx){
+  const p=(state.scriptVersions||[])[idx];
+  if(!p)return false;
+  state.scriptVersionIndex=idx; scriptDirection=idx;
+  state.project=p;
+  state.media={}; state.frames={}; state.voClips={}; state.approved=false;
+  $("#script-json").value=JSON.stringify(p,null,2);
+  const v=p._violations||[];
+  $("#rw-status").textContent=v.length
+    ? `版本 ${idx+1}:仍有 ${v.length} 條建議人工確認:${v.join(";")}`
+    : `版本 ${idx+1} ✓ 通過商業檢查|hook:${p.hook_type||"?"}|公式:${p.formula||"?"}|暗號:「${p.cta_code||"?"}」`;
+  $("#rw-status").className=v.length?"status-line err":"status-line ok";
+  try{ installScriptReview({keepProject:true,riskDemo:false}); }catch(e){}
+  return true;
+}
 async function generateBrandScript(){
   if(!state.analysis){ $("#rw-status").textContent="✗ 請先完成步驟 2 拆解"; $("#rw-status").className="status-line err"; return; }
   if(!state.styleKey){ state.styleKey="process"; try{ renderStyles(); }catch(e){} } /* 未選風格時預設「幕後過程」,客戶仍可改 */
   const targetSec = parseInt($("#len-tpl").value,10);
   const shotCount = LEN_SHOTS[targetSec];
   try{ const adv=document.querySelector(".script-advanced"); if(adv)adv.open=true; $("#rw-status").scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){}
-  genStage($("#rw-status"),"啟動腳本引擎(含商業規則檢查)…",50);
+  genStage($("#rw-status"),"同時生成 3 個不同創意方向的腳本版本(各自腦暴+商業檢查,約 60-100 秒)…",80);
   try{
-    let p = null, violations = [];
-    const MAX_ROUNDS = 2; /* 保底交付制:全片重寫最多 2 輪,之後改用定點修句;無論如何都交付腳本 */
-    for(let round=1; round<=MAX_ROUNDS; round++){
-      const fixNote = violations.length
-        ? `\n\n上一版腳本違反了以下硬規則,請修正後重新輸出完整 JSON:\n- ${violations.join("\n- ")}`
-        : "";
-      genStage($("#rw-status"), round===1
-        ? `第 1/${MAX_ROUNDS} 輪:AI 依拆解結構撰寫 ${shotCount} 鏡原創腳本中…`
-        : `第 ${round}/${MAX_ROUNDS} 輪:修正上一版的 ${violations.length} 條商業規則違規,重寫中…`, 45);
-      const text = await irisGenerate("script-default", [{text: rewritePrompt(shotCount, targetSec) + fixNote}], true);
-      p = parseJsonLoose(text);
-      if(!Array.isArray(p.shots) || !p.shots.length) throw new Error("腳本缺 shots");
-      const pd = plannedDurs(p.shots.length);
-      p.shots.forEach((s,i)=>{ s.id = i+1; s.dur = pd[i] || 4; });
-      genStage($("#rw-status"),`第 ${round}/${MAX_ROUNDS} 輪:腳本已寫完,正在逐條檢查商業硬規則(hook/CTA/字數/禁語)…`,4);
-      violations = validateCommercial(p, state.brand);
-      if(violations.length&&round<MAX_ROUNDS){ genStage($("#rw-status"),`第 ${round}/${MAX_ROUNDS} 輪檢查完成:${violations.length} 條違規,自動重寫中…`,45); }
-      else { $("#rw-status").textContent = `第 ${round}/${MAX_ROUNDS} 輪檢查完成:${violations.length? `${violations.length} 條違規,已達重寫上限,交人工斟酌` : "✓ 通過商業檢查"}`; }
-      if(!violations.length) break;
-    }
-    for(let fix=1; fix<=2 && violations.length; fix++){
-      try{
-        genStage($("#rw-status"),`定點修句 ${fix}/2:只改寫 ${violations.length} 條違規句,不重寫全片…`,15);
-        await microFixScript(p,violations);
-        violations=validateCommercial(p,state.brand);
-        if(!violations.length)$("#rw-status").textContent="✓ 定點修句完成,通過商業檢查";
-      }catch(e){ break; }
-    }
-    p._real = true;
-    creativeHistoryPush(p.shots?.[0]?.action_prompt); /* 記入歷史,之後十版內不得重複 */
-    p.audio = {music:"user-upload", voiceover:"tts"};
-    state.project = p;
-    state.media = {}; state.frames = {}; state.voClips = {}; state.approved = false;
-    $("#script-json").value = JSON.stringify(p, null, 2);
+    const results = await Promise.allSettled([0,1,2].map(()=>generateOneScript(shotCount,targetSec)));
+    const versions = results.filter(r=>r.status==="fulfilled").map(r=>r.value);
+    if(!versions.length){ throw (results[0].reason||new Error("三個版本都生成失敗,請再試一次")); }
+    state.scriptVersions = versions;
+    versions.forEach(v=>creativeHistoryPush(v.shots?.[0]?.action_prompt)); /* 三版開場全部記入歷史 */
     $("#script-card").classList.remove("hidden");
-    const topicNow = ($("#topic-kw")?.value||"").trim();
-    if(topicNow) p.meta = Object.assign({}, p.meta, {topic: topicNow});
-    const passMsg = violations.length
-      ? `✓ 腳本已產出並放入上方審核表;仍有 ${violations.length} 條建議人工確認:${violations.join(";")}`
-      : `✓ 已通過商業檢查|hook:${p.hook_type||"?"}|公式:${p.formula||"?"}|暗號:「${p.cta_code||"?"}」|聲線:${p.voice?.gender||"?"}·${p.voice?.style||"?"}`;
-    $("#rw-status").textContent = passMsg;
-    $("#rw-status").className = violations.length? "status-line err" : "status-line ok";
-    try{
-      installScriptReview({keepProject:true,riskDemo:false});
-      window.setTimeout(()=>{ $("#script-review-demo")?.scrollIntoView({behavior:"smooth",block:"start"}); },150);
-    }catch(e){}
+    const p = versions[0];
+    adoptScriptVersion(0);
+    const extra = versions.length<3 ? `(${3-versions.length} 個版本生成失敗;再按一次生成會重出 3 版)` : "";
+    $("#rw-status").textContent = `✓ 已生成 ${versions.length} 個創意版本${extra}——點右上「腳本版本 1/2/3」切換比較,選定後直接審核。`;
+    $("#rw-status").className = "status-line ok";
+    window.setTimeout(()=>{ $("#script-review-demo")?.scrollIntoView({behavior:"smooth",block:"start"}); },150);
     blockedCustomerDataFetch(`${SUPABASE_URL}/rest/v1/iris_patterns`, {
       method:"POST",
       headers:{ apikey:SUPABASE_ANON_KEY,
@@ -9578,7 +9576,10 @@ function installScriptReview(options){
     const version=event.target.closest("[data-script-version]");
     if(version){
       if(state.project&&state.project._real){
-        $("#rw-status").textContent="這是你的品牌真實腳本(單一版本);要不同方向請重新按「生成品牌腳本+分鏡」。";
+        const want=Number(version.dataset.scriptVersion);
+        if(!adoptScriptVersion(want)){
+          $("#rw-status").textContent=`版本 ${want+1} 尚未生成——再按一次「生成品牌腳本+分鏡」會重新產出 3 個版本。`;
+        }
         return;
       }
       scriptDirection=Number(version.dataset.scriptVersion);
