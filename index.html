@@ -5009,21 +5009,22 @@ async function generateBrandScript(){
   $("#rw-status").textContent = "生成腳本中(含商業規則檢查,約 30-90 秒)…"; $("#rw-status").className="status-line run";
   try{
     let p = null, violations = [];
-    for(let round=1; round<=3; round++){
+    const MAX_ROUNDS = 6; /* 寫到過為止的空間:最多 6 輪自動修正,不讓客戶自己重跑 */
+    for(let round=1; round<=MAX_ROUNDS; round++){
       const fixNote = violations.length
         ? `\n\n上一版腳本違反了以下硬規則,請修正後重新輸出完整 JSON:\n- ${violations.join("\n- ")}`
         : "";
       $("#rw-status").textContent = round===1
-        ? `第 1/3 輪:AI 依拆解結構撰寫 ${shotCount} 鏡原創腳本中(約 30-60 秒)…`
-        : `第 ${round}/3 輪:修正上一版的 ${violations.length} 條商業規則違規,重寫中(約 30-60 秒)…`;
+        ? `第 1/${MAX_ROUNDS} 輪:AI 依拆解結構撰寫 ${shotCount} 鏡原創腳本中(約 30-60 秒)…`
+        : `第 ${round}/${MAX_ROUNDS} 輪:修正上一版的 ${violations.length} 條商業規則違規,重寫中(約 30-60 秒)…`;
       const text = await irisGenerate("script-default", [{text: rewritePrompt(shotCount, targetSec) + fixNote}], true);
       p = parseJsonLoose(text);
       if(!Array.isArray(p.shots) || !p.shots.length) throw new Error("腳本缺 shots");
       const pd = plannedDurs(p.shots.length);
       p.shots.forEach((s,i)=>{ s.id = i+1; s.dur = pd[i] || 4; });
-      $("#rw-status").textContent = `第 ${round}/3 輪:腳本已寫完,正在逐條檢查商業硬規則(hook/CTA/字數/禁語)…`;
+      $("#rw-status").textContent = `第 ${round}/${MAX_ROUNDS} 輪:腳本已寫完,正在逐條檢查商業硬規則(hook/CTA/字數/禁語)…`;
       violations = validateCommercial(p, state.brand);
-      $("#rw-status").textContent = `第 ${round}/3 輪檢查完成:${violations.length? `${violations.length} 條違規${round<3?",自動重寫中…":",已達重寫上限,交人工斟酌"}` : "✓ 通過商業檢查"}`;
+      $("#rw-status").textContent = `第 ${round}/${MAX_ROUNDS} 輪檢查完成:${violations.length? `${violations.length} 條違規${round<MAX_ROUNDS?",自動重寫中…":",已達重寫上限,交人工斟酌"}` : "✓ 通過商業檢查"}`;
       if(!violations.length) break;
     }
     p.audio = {music:"user-upload", voiceover:"tts"};
@@ -7352,11 +7353,12 @@ async function generateFromIdea(feedback){
   st.className = "status-line run";
   try{
     let p = null, violations = [];
-    for(let round=1; round<=3; round++){
+    const MAX_ROUNDS = 6;
+    for(let round=1; round<=MAX_ROUNDS; round++){
       const fixNote = violations.length ? `\n\n上一版違反以下硬規則,請修正後重新輸出完整 JSON:\n- ${violations.join("\n- ")}` : "";
       st.textContent = round===1
-        ? `第 1/3 輪:AI 依你的想法撰寫 ${shotCount} 鏡腳本中(約 30-60 秒)…`
-        : `第 ${round}/3 輪:修正 ${violations.length} 條違規,重寫中(約 30-60 秒)…`;
+        ? `第 1/${MAX_ROUNDS} 輪:AI 依你的想法撰寫 ${shotCount} 鏡腳本中(約 30-60 秒)…`
+        : `第 ${round}/${MAX_ROUNDS} 輪:修正 ${violations.length} 條違規,重寫中(約 30-60 秒)…`;
       const text = await irisGenerate("script-default",
         [{text: ideaPrompt(shotCount, targetSec, idea, feedback, feedback? state.project : null) + fixNote}], true);
       p = parseJsonLoose(text);
