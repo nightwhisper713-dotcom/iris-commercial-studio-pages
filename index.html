@@ -5084,6 +5084,8 @@ async function generateStoryboardFrames(onlyId){
     for(const b of brandRefs){ if(refs.length<3)refs.push(b); }
     const prompt=`【本鏡畫面・最高優先,逐字執行】${shot.action_prompt||shot.img_prompt||"品牌日常實景"}
 【構圖重點】上面描述中的「視角/鏡頭位置」(例如:從車內往外拍、特寫、俯拍)是本張圖的第一要務,必須精準呈現,不可改成旁觀視角。
+【靜態轉譯規則】這是影片分鏡的「單格劇照」:描述若含時間變化(從暗到亮、瞬間切換、轉變、before/after),只呈現【變化完成後的最終狀態】,不要畫中間過程——例如「車燈瞬間變亮」就畫車燈全亮、光束清晰照亮前方的那一刻。
+【動作與手勢】描述中的人物動作、手勢、表情必須逐項精準執行,不可替換或省略。常見對照:比讚=單手豎起大拇指、點頭微笑=看向鏡頭微笑、招手=手掌張開揮動。
 ${shot.img_prompt&&shot.img_prompt!==shot.action_prompt?`【視覺補充】${shot.img_prompt}`:""}
 ${consistency}
 【輸出要求】直接輸出一張 9:16 圖片。不要輸出任何文字、說明或問題——只要圖片。`;
@@ -9169,12 +9171,17 @@ async function runCloudReview(){
     }
   }
   if(!sentences.length)return 0;
-  const r=await window.IRIS_SUPABASE.invoke("gemini",{body:{
-    task:"review",
-    input:{ sentences:sentences.slice(0,40), industry:String(state.brand?.industry||"").slice(0,80),
-      banned:(state.brand?.banned||[]).slice(0,40), locale:"zh-Hant" },
-    allowLocalFallback:false
-  }});
+  let r=null,lastE=null;
+  for(let tryNo=1;tryNo<=2&&!r;tryNo++){ /* 偶發壞輸出重擲一次 */
+    try{
+      r=await window.IRIS_SUPABASE.invoke("gemini",{body:{
+        task:"review",
+        input:{ sentences:sentences.slice(0,40), industry:String(state.brand?.industry||"").slice(0,80),
+          banned:(state.brand?.banned||[]).slice(0,40), locale:"zh-Hant" },
+        allowLocalFallback:false
+      }});
+    }catch(e){ lastE=e; if(tryNo===2)throw e; await new Promise(res=>setTimeout(res,4000)); }
+  }
   const byId=new Map(sentences.map(s=>[s.id,s]));
   cloudReviewFindings=(r?.result?.findings||[]).map(f=>{
     const src=byId.get(String(f.sentenceId))||{};
