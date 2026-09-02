@@ -5071,27 +5071,36 @@ async function generateStoryboardFrames(onlyId){
   const brandRefs=[];
   for(const a of (state.brandAssets||[]).slice(0,2)){ const b=await shrinkToPngB64(typeof a==="string"?a:a.url,480); if(b)brandRefs.push(b); }
   const targets=onlyId?shots.filter(s=>s.id===onlyId):shots;
-  let done=0;
+  let done=0; const failed=[];
   try{
-    for(const shot of targets){
-      genStage(st,`分鏡示意圖 ${done+1}/${targets.length}(鏡 ${shot.id}):生成中(前後鏡互鎖一致性)…`,14);
-      const refs=[];
-      const anchorF=state.frames[shots[0].id];
-      const idx=shots.indexOf(shot);
-      const prevF=idx>0?state.frames[shots[idx-1].id]:null;
-      if(anchorF&&shot.id!==shots[0].id)refs.push(await shrinkToPngB64(anchorF,480));
-      if(prevF&&prevF!==anchorF)refs.push(await shrinkToPngB64(prevF,480));
-      for(const b of brandRefs){ if(refs.length<3)refs.push(b); }
-      const prompt=`${consistency}\n【本鏡畫面】${shot.action_prompt||shot.img_prompt||"品牌日常實景"}`;
-      const url=await storyboardFrame(prompt,refs);
-      state.frames[shot.id]=url; try{ delete frameImgCache[shot.id]; }catch(e){}
-      const cellEl=document.querySelector(`[data-scene-row="${shot.id}"] .script-visual`);
-      if(cellEl){ let im=cellEl.querySelector(".sb-thumb"); if(!im){ im=document.createElement("img"); im.className="sb-thumb"; im.alt=`鏡 ${shot.id} 示意圖`; cellEl.appendChild(im);} im.src=url; const one=cellEl.querySelector("[data-sb-one]"); if(one)one.textContent="重生示意圖"; }
-      done++;
+  for(const shot of targets){
+    genStage(st,`分鏡示意圖 ${done+failed.length+1}/${targets.length}(鏡 ${shot.id}):生成中(前後鏡互鎖一致性)…`,14);
+    const refs=[];
+    const anchorF=state.frames[shots[0].id];
+    const idx=shots.indexOf(shot);
+    const prevF=idx>0?state.frames[shots[idx-1].id]:null;
+    if(anchorF&&shot.id!==shots[0].id)refs.push(await shrinkToPngB64(anchorF,480));
+    if(prevF&&prevF!==anchorF)refs.push(await shrinkToPngB64(prevF,480));
+    for(const b of brandRefs){ if(refs.length<3)refs.push(b); }
+    const prompt=`${consistency}\n【本鏡畫面】${shot.action_prompt||shot.img_prompt||"品牌日常實景"}\n【輸出要求】直接輸出一張 9:16 圖片。不要輸出任何文字、說明或問題——只要圖片。`;
+    let url=null;
+    for(let sbTry=1; sbTry<=3 && !url; sbTry++){ /* 單張最多 3 次,失敗換下一張,不中斷整批 */
+      try{ url=await storyboardFrame(prompt,refs); }
+      catch(e){
+        if(sbTry===3){ failed.push({id:shot.id,msg:e.message}); }
+        else{ genStage(st,`鏡 ${shot.id} 第 ${sbTry} 次未取得圖片,自動重試…`,12); await new Promise(r2=>setTimeout(r2,2000)); }
+      }
     }
-    if(st){st.className="status-line ok";st.textContent=`✓ 示意圖完成 ${done}/${targets.length}。生成影片時會以這些畫面為各段基準,所見即所得。`;}
-  }catch(e){
-    if(st){st.className="status-line err";st.textContent=`✗ 第 ${done+1} 張失敗:${e.message}(已完成的已保留,可再按一次續跑)`;}
+    if(!url)continue;
+    state.frames[shot.id]=url; try{ delete frameImgCache[shot.id]; }catch(e){}
+    const cellEl=document.querySelector(`[data-scene-row="${shot.id}"] .script-visual`);
+    if(cellEl){ let im=cellEl.querySelector(".sb-thumb"); if(!im){ im=document.createElement("img"); im.className="sb-thumb"; im.alt=`鏡 ${shot.id} 示意圖`; cellEl.appendChild(im);} im.src=url; const one=cellEl.querySelector("[data-sb-one]"); if(one)one.textContent="重生示意圖"; }
+    done++;
+  }
+  if(st){
+    if(!failed.length){ st.className="status-line ok"; st.textContent=`✓ 示意圖完成 ${done}/${targets.length}。生成影片時會以這些畫面為各段基準,所見即所得。`; }
+    else{ st.className="status-line err"; st.textContent=`完成 ${done}/${targets.length};鏡 ${failed.map(f=>f.id).join("、")} 未成功(${failed[0].msg})——點該鏡的「生成示意圖」單獨重試即可。`; }
+  }
   }finally{ sbRunning=false; }
 }
 function genStage(el,text,expectSec){
