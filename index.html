@@ -5005,6 +5005,22 @@ function validateCommercial(p, brand){
   });
   return bad;
 }
+function goPickStyleThenGenerate(){
+  gotoStep(4);
+  try{ const adv=document.querySelector(".script-advanced"); if(adv)adv.open=true; }catch(e){}
+  try{ renderStyles(); $("#style-grid")?.scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){}
+  const st=$("#rw-status"); if(st){ st.className="status-line ok"; st.textContent="✓ 拆解結構已帶入。請選一種腳本風格,再按「生成品牌腳本+分鏡」。"; }
+}
+async function microFixScript(p,violations){
+  const targets=[...new Set(violations.map(v=>{const m=String(v).match(/第\s*(\d+)\s*鏡|鏡\s*(\d+)/);return m?Number(m[1]||m[2]):null;}).filter(Boolean))];
+  const list=targets.length?p.shots.filter(s=>targets.includes(s.id)):p.shots;
+  if(!list.length)return p;
+  const prompt=`你是文案醫生。只改寫下列鏡頭的 voiceover,使其完全符合規則;語意、品牌口吻與節奏保持不變,其他欄位一律不動。\n必須符合的規則:\n- ${violations.map(v=>String(v)).join("\n- ")}\n【極重要】「字」指中文字元數,輸出前逐字數過;寧可短、絕不可超過上限。\n待修句子:\n${list.map(s=>`鏡 ${s.id}(上限 ${s.dur*5} 字${s.id===1?",且首句另限 15 字":""}):「${s.voiceover}」`).join("\n")}\n只輸出 JSON:{"shots":[{"id":鏡號,"voiceover":"改寫後的句子"}]}`;
+  const text=await irisGenerate("fix",[{text:prompt}],true);
+  const fixed=parseJsonLoose(text);
+  for(const f of (fixed.shots||[])){ const s=p.shots.find(x=>x.id===Number(f.id)); if(s&&f.voiceover)s.voiceover=String(f.voiceover); }
+  return p;
+}
 function genStage(el,text,expectSec){
   if(!el)return;
   el.className="status-line run";
@@ -5038,6 +5054,15 @@ async function generateBrandScript(){
       else { $("#rw-status").textContent = `第 ${round}/${MAX_ROUNDS} 輪檢查完成:${violations.length? `${violations.length} 條違規,已達重寫上限,交人工斟酌` : "✓ 通過商業檢查"}`; }
       if(!violations.length) break;
     }
+    if(violations.length){
+      try{
+        genStage($("#rw-status"),`殘留 ${violations.length} 條違規,進行定點修句(只改違規句,不重寫全片)…`,15);
+        await microFixScript(p,violations);
+        violations=validateCommercial(p,state.brand);
+        if(!violations.length)$("#rw-status").textContent="✓ 定點修句完成,通過商業檢查";
+      }catch(e){}
+    }
+    p._real = true;
     p.audio = {music:"user-upload", voiceover:"tts"};
     state.project = p;
     state.media = {}; state.frames = {}; state.voClips = {}; state.approved = false;
@@ -7381,6 +7406,15 @@ async function generateFromIdea(feedback){
       st.textContent = `第 ${round} 輪:${violations.length? violations.length+" 條待修,自動重寫中…" : "✓ 通過商業檢查"}`;
       if(!violations.length) break;
     }
+    if(violations.length){
+      try{
+        genStage(st,`殘留 ${violations.length} 條違規,進行定點修句(只改違規句)…`,15);
+        await microFixScript(p,violations);
+        const noVO2 = p.shots.every(s=>!String(s.voiceover||"").trim());
+        violations = noVO2 ? [] : validateCommercial(p, state.brand);
+      }catch(e){}
+    }
+    p._real = true;
     p.audio = Object.assign({ music:"user-upload", voiceover: p.shots.every(s=>!String(s.voiceover||"").trim()) ? null : "tts" }, p.audio||{});
     const topicNow = ($("#topic-kw")?.value||"").trim();
     if(topicNow) p.meta = Object.assign({}, p.meta, {topic: topicNow});
@@ -8896,7 +8930,7 @@ function renderStructureAnalysis(){
   $("#btn-structure-add").addEventListener("click",()=>{
     if(!structurePicked.size){setStructureState("empty");return;}
     if(window.IRIS_SUPABASE?.configured?.()&&window.IRIS_SUPABASE.user()&&state.analysis){
-      gotoStep(4); generateBrandScript(); return; /* 真實生成:以拆解結構為骨架寫原創腳本 */
+      goPickStyleThenGenerate(); return; /* 先讓客戶選風格,再由客戶按下生成 */
     }
     installScriptReview({segments:[...structurePicked].sort((a,b)=>a-b)});
     gotoStep(4);
@@ -8938,7 +8972,7 @@ function renderStructureAnalysis(){
   });
   $("#btn-structure-to-script").addEventListener("click",()=>{
     if(window.IRIS_SUPABASE?.configured?.()&&window.IRIS_SUPABASE.user()&&state.analysis){
-      gotoStep(4); generateBrandScript(); return; /* 真實生成 */
+      goPickStyleThenGenerate(); return; /* 先選風格,再生成 */
     }
     installScriptReview({segments:[...structurePicked].sort((a,b)=>a-b)});gotoStep(4);
   });
@@ -9309,7 +9343,7 @@ function installScriptReview(options){
   box.innerHTML=`<aside class="script-rail"><p class="rail-label">專案</p><p class="rail-project">${escapeHtml(state.brand?.slogan||"未命名專案")}<br><small>${escapeHtml(state.brand?.name||"")}｜${escapeHtml(i18nText(state.brand?.industry||""))}</small></p><hr>`
     +`<div class="rail-steps">${RAIL_ITEMS.map(item=>`<button type="button" class="rail-step ${item.key==="script"?"active":""}" data-rail-go="${item.step}" data-rail-workspace="${item.workspace||""}"><span class="rail-icon">${ico(item.icon)}</span><span>${escapeHtml(item.label)}${item.note?`<small>${escapeHtml(item.note)}</small>`:""}</span></button>`).join("")}</div>`
     +`<hr><p class="rail-label">場景清單</p><div class="rail-scenes" id="script-rail-scenes"></div></aside>`
-   +`<section class="script-main"><div class="script-main-head"><div><h3>腳本<small>（來自分析結構：爆款抽象結構）</small></h3><p class="hint">將爆款結構轉寫為原創商業短影音腳本，並即時內容審核與優化。</p></div>`
+   +`<section class="script-main">${state.project&&state.project._real?"":`<div class="trend-banner warn" style="margin-bottom:10px">${ico("alert")}<span><b>目前顯示的是示範腳本(佔位)。</b>展開下方「進階腳本工具」選一種風格並按「生成品牌腳本+分鏡」,這裡就會換成你的品牌真實腳本。</span></div>`}<div class="script-main-head"><div><h3>腳本<small>（來自分析結構：爆款抽象結構）</small></h3><p class="hint">將爆款結構轉寫為原創商業短影音腳本，並即時內容審核與優化。</p></div>`
      +`<div class="script-head-tools"><div><span>腳本版本</span><div class="version-pills" id="script-versions">${SCRIPT_DIRECTIONS.map((name,index)=>`<button type="button" class="${index===scriptDirection?"active":""}" data-script-version="${index}" aria-label="原創方向 ${name}">${index+1}</button>`).join("")}</div></div>`
      +`<div><span>差異檢視</span><label class="switch"><input type="checkbox" id="script-diff-toggle"><i></i></label></div></div></div>`
      +`<div class="script-grid"><div class="script-grid-head"><span></span><span>場次</span><span>旁白／對白</span><span>畫面指示</span><span>字幕（建議）</span><span>時長</span><span></span></div><div id="script-lines"></div></div>`
