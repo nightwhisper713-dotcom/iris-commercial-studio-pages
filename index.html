@@ -5075,7 +5075,10 @@ async function generateBrandScript(){
       : `✓ 已通過商業檢查|hook:${p.hook_type||"?"}|公式:${p.formula||"?"}|暗號:「${p.cta_code||"?"}」|聲線:${p.voice?.gender||"?"}·${p.voice?.style||"?"}`;
     $("#rw-status").textContent = passMsg;
     $("#rw-status").className = violations.length? "status-line err" : "status-line ok";
-    try{ installScriptReview({keepProject:true,riskDemo:false}); }catch(e){}
+    try{
+      installScriptReview({keepProject:true,riskDemo:false});
+      window.setTimeout(()=>{ $("#script-review-demo")?.scrollIntoView({behavior:"smooth",block:"start"}); },150);
+    }catch(e){}
     blockedCustomerDataFetch(`${SUPABASE_URL}/rest/v1/iris_patterns`, {
       method:"POST",
       headers:{ apikey:SUPABASE_ANON_KEY,
@@ -7427,9 +7430,12 @@ async function generateFromIdea(feedback){
       ? `⚠ 仍有 ${violations.length} 條未過(可在下方寫意見重生):${violations.join(";")}`
       : `✓ 完成|hook:${p.hook_type||"?"}|公式:${p.formula||"?"}|${p.cta_code? "暗號「"+p.cta_code+"」" : "純形象片(無 CTA)"}`;
     st.className = violations.length ? "status-line err" : "status-line ok";
-    try{ installScriptReview({keepProject:true,riskDemo:false}); }catch(e){}
+    try{
+      installScriptReview({keepProject:true,riskDemo:false});
+      window.setTimeout(()=>{ $("#script-review-demo")?.scrollIntoView({behavior:"smooth",block:"start"}); },150);
+    }catch(e){}
     renderStoryboard(); syncScrub();
-    gotoStep(5);
+    gotoStep(4); /* 想法生成同樣停在審核,不直接跳素材 */
   }catch(e){ st.textContent = "✗ " + e.message; st.className = "status-line err"; }
   finally{ $("#btn-idea-gen").disabled = false; $("#btn-idea-refine").disabled = false; }
 }
@@ -9377,6 +9383,10 @@ function installScriptReview(options){
     if(sceneAction){handleSceneAction(sceneAction.dataset.sceneAction,sceneAction.dataset.sceneId);return;}
     const version=event.target.closest("[data-script-version]");
     if(version){
+      if(state.project&&state.project._real){
+        $("#rw-status").textContent="這是你的品牌真實腳本(單一版本);要不同方向請重新按「生成品牌腳本+分鏡」。";
+        return;
+      }
       scriptDirection=Number(version.dataset.scriptVersion);
       state.project=scriptDirectionVariant(scriptBaseProject(riskDemo),scriptDirection);
       scriptSnapshotBaseline();
