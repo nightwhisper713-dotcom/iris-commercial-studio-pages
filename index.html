@@ -5171,9 +5171,12 @@ async function generateOneScript(shotCount,targetSec){
 function adoptScriptVersion(idx){
   const p=(state.scriptVersions||[])[idx];
   if(!p)return false;
+  const prev=(state.scriptVersions||[])[state.scriptVersionIndex];
+  if(prev&&prev!==p)prev._frames=state.frames;
   state.scriptVersionIndex=idx; scriptDirection=idx;
   state.project=p;
-  state.media={}; state.frames={}; state.voClips={}; state.approved=false;
+  state.media={}; state.frames=p._frames||{}; state.voClips={}; state.approved=false;
+  try{ for(const k of Object.keys(frameImgCache))delete frameImgCache[k]; }catch(e){}
   $("#script-json").value=JSON.stringify(p,null,2);
   const v=p._violations||[];
   $("#rw-status").textContent=v.length
