@@ -5066,6 +5066,7 @@ async function generateStoryboardFrames(onlyId){
   if(!window.IRIS_SUPABASE?.configured?.()||!window.IRIS_SUPABASE.user()){ if(st){st.className="status-line err";st.textContent="✗ 請先登入";} return; }
   sbRunning=true;
   const consistency=`【一致性鐵律】整個分鏡系列屬於同一支影片:同一位主角、同一件服裝、同一個場地、同一種光線色溫與畫質。附上的參考圖是已定稿的分鏡與場地——人物長相、髮型、衣著、空間陳設必須與參考圖完全一致,只允許改變動作與構圖。
+【光線基準】整片的曝光、色溫、對比以參考圖為基準:除非本鏡描述明確要求變亮或變暗,否則環境亮度與色調必須與參考圖一致,不可自行加溫、提亮或改變路燈顏色。描述要求的亮度變化(如車燈變亮)只改該光源,環境基準不動。
 【禁令】畫面中不得出現任何文字、字母、數字、Logo、招牌字;不得出現本鏡描述以外的任何人物。9:16 直式,寫實手持 UGC 質感,不要棚拍廣告感。
 【整片氛圍】${state.project?.anchor||""}`;
   const brandRefs=[];
