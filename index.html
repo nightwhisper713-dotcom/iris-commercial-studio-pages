@@ -5272,7 +5272,7 @@ async function generateBrandScript(){
   const targetSec = parseInt($("#len-tpl").value,10);
   const shotCount = LEN_SHOTS[targetSec];
   try{ const adv=document.querySelector(".script-advanced"); if(adv)adv.open=true; $("#rw-status").scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){}
-  genStage($("#rw-status"),"同時生成 3 個不同創意方向的腳本版本(各自腦暴+商業檢查,約 60-100 秒)…",80);
+  genStage($("#rw-status"),"同時生成 3 個不同創意方向的腳本版本(旗艦創意引擎深度構思中,約 90-150 秒)…",120);
   try{
     const cats=[...CREATIVE_PLAYBOOK].sort(()=>Math.random()-.5).slice(0,3);
     const styles=[...VISUAL_STYLES].sort(()=>Math.random()-.5).slice(0,3);
@@ -9629,7 +9629,7 @@ function installScriptReview(options){
    +`<section class="script-main">${state.project&&state.project._real?"":`<div class="trend-banner warn" style="margin-bottom:10px">${ico("alert")}<span><b>目前顯示的是示範腳本(佔位)。</b>展開下方「進階腳本工具」選一種風格並按「生成品牌腳本+分鏡」,這裡就會換成你的品牌真實腳本。</span></div>`}<div class="script-main-head"><div><h3>腳本<small>（來自分析結構：爆款抽象結構）</small></h3><p class="hint">將爆款結構轉寫為原創商業短影音腳本，並即時內容審核與優化。</p></div>`
      +`<div class="script-head-tools"><div><span>分鏡示意圖</span><div><button type="button" class="btn small teal" id="btn-make-sb" title="每鏡生成一張 9:16 示意圖,前後鏡互鎖一致性;生成影片時沿用">生成示意圖</button></div></div>`
      +`<div><span>腳本版本</span><div class="version-pills" id="script-versions">${SCRIPT_DIRECTIONS.map((name,index)=>`<button type="button" class="${index===scriptDirection?"active":""}" data-script-version="${index}" aria-label="原創方向 ${name}">${index+1}</button>`).join("")}</div></div>`
-     +`<div><span>差異檢視</span><label class="switch"><input type="checkbox" id="script-diff-toggle"><i></i></label></div></div></div>`
+     +`</div></div>`
      +`<div id="sb-status" class="status-line" role="status" aria-live="polite"></div>`
      +`<div class="script-grid"><div class="script-grid-head"><span></span><span>場次</span><span>旁白／對白</span><span>畫面指示</span><span>字幕（建議）</span><span>時長</span><span></span></div><div id="script-lines"></div></div>`
      +`<div class="script-compare hidden" id="script-compare"></div>`
@@ -9688,11 +9688,10 @@ function installScriptReview(options){
   });
   } /* end box._clickWired once-guard */
   $("#btn-make-sb")?.addEventListener("click",()=>generateStoryboardFrames());
-  $("#script-diff-toggle").addEventListener("change",event=>{
+  $("#script-diff-toggle")?.addEventListener("change",event=>{ /* 差異檢視 UI 已移除;保留邏輯以防舊參照 */
     scriptShowDiff=event.target.checked;
     document.body.classList.toggle("script-diff",scriptShowDiff);
     renderScriptCompare();
-    $("#rw-status").textContent=scriptShowDiff?"差異檢視已開啟：改動過的欄位會列出上一版原文。":"差異檢視已關閉。";
   });
   $("#btn-review-rewrite-all").addEventListener("click",scriptRewriteAll);
   $("#btn-review-undo").addEventListener("click",scriptUndoLast);
