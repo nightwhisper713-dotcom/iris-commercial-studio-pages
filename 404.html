@@ -5025,7 +5025,8 @@ function creativeSeedBlock(seed){
 【本版視覺風格】「${style.name}」(${style.desc})。anchor 欄位必須以這種風格的攝影語言撰寫:${style.photo}。全片每一鏡的光線與色調都服從此風格。
 【魔法時刻・必備】全片必須設計一個 magic moment 鏡頭——一次瞬間的視覺爽點(例:燈瞬間全亮、髒污一秒變潔淨、老舊瞬間翻新),這一鏡是留存與轉發的核心;在該鏡 action_prompt 句首標【魔法時刻】。
 【動態元素・每鏡必備】每鏡 action_prompt 至少寫入一個「會動的環境或材質元素」(蒸氣、光斑流動、雨絲、布料飄動、火花、灰塵微粒、水珠滑落),畫面才不會死板。
-${seasonal.length?`【節慶掛鉤・可選用】近期節慶:${seasonal.join("、")}。若手法類別是節慶時事系則必須採用其一;其他類別可自然帶入,不硬塞。`:""}
+${(play.cat==="節慶時事系"&&seasonal.length)?`【節慶掛鉤】近期節慶:${seasonal.join("、")}。節慶只能作為「動機或背景」(為什麼此刻需要這個服務),主戲永遠是品牌的服務與專業——嚴禁讓節慶活動(烤肉、圍爐、倒數)變成畫面主體。`:""}
+【創意定義・鐵律】創意=意料之外+情理之中。每一鏡都必須與品牌服務有直接因果;與品牌無因果的畫面即為廢鏡,寧可平實不可離題。獵奇、無厘頭、堆砌氛圍而不推進主張的內容一律不允許。
 【創意腦暴】寫稿前先在心中想 3 個執行此玩法的不同切入,選「前 1.5 秒最能讓人停下滑動」的那個。場景要具體且貼近品牌真實營運,參考:${scenes.join("、")}(可自創更好的)。
 ${history.length?`【歷史開場・全部禁用】本版的時空、地點、情境、手法不得與以下任何一條雷同:\n${history.map((h,i)=>` ${i+1}. ${h}`).join("\n")}`:""}`;
 }
@@ -5049,6 +5050,8 @@ R1 前 1.5 秒三重 hook:第 1 鏡口播第一句 ≤15 字且必須「指名�
 R2 一片一訊息:全片只推「一個」服務或痛點,禁止塞第二個賣點。
 R2b【主體類別鎖定】影片中的載具/產品/服務對象必須嚴格符合品牌產業分類——「汽車照明」就是汽車,不可擅自改成機車、腳踏車或其他類別;「美髮」就是頭髮,不可變成美甲。對產業分類有歧義時,以完整分類路徑為準。
 R11【鏡頭語言規格・每鏡都要】action_prompt 必須是「一個可讀的鏡頭」,依序寫:運鏡標記+主體+單一可見動作+場景與空間關係+光線,結尾加「一鏡到底,不切換場景」。運鏡標記從清單擇一放句首:【推近】【拉遠】【左搖】【右搖】【左移】【右移】【升鏡】【降鏡】【俯視】【仰視】【跟拍】【手持微晃】【固定鏡頭】。每鏡只允許一個主要動作與一個主要運鏡;禁止一鏡內出現多個地點、時間跳躍或連續兩個以上動作;需要強調氛圍時描述光線與景深,不要堆疊動作。
+R12【品牌露出結構・違反即廢稿】全片至少 2 鏡必須明確發生在品牌場域(店內/工作檯/技師或老闆與顧客互動),action_prompt 要寫出場域字眼(店內、工作檯、技師…);最後一鏡(CTA)必須發生在品牌場域,讓觀眾知道要去哪裡。品牌不露出的廣告不是廣告。
+【交稿前自檢・答不出就自行重寫】輸出前逐題自問:①這支片的單一主張是什麼?②品牌場域在第幾鏡露出?③魔法時刻與主張的直接因果是什麼?任何一題答不清楚,整支重寫後再輸出。自檢過程不要輸出,只輸出最終 JSON。
 R3 UGC 原生感:口播像老闆本人對客人講話,口語、短句;禁廣告腔、禁「歡迎蒞臨」「專業團隊」「品質保證」類官腔詞。
 R4 每鏡口播 ≤26 字(4 秒唸得完);整片口播禁止前後鏡重複同一句。
 R4b 分段切點設計:本片會切成前後兩段生成,分界在鏡 ${Math.ceil(shotCount/2)} 與鏡 ${Math.ceil(shotCount/2)+1} 之間——鏡 ${Math.ceil(shotCount/2)} 的 voiceover 必須是完整句子並在該鏡內講完(句號收尾),動作要有收束感;鏡 ${Math.ceil(shotCount/2)+1} 開啟新節拍並換機位/景別(人物、服裝、光線一致)。嚴禁一句台詞或連續動作跨越這兩鏡。
@@ -5092,9 +5095,14 @@ M4 「${styleName}」風格只改口吻與包裝,不得改變結構。
 M5 只有當參考結構與上方商業硬規則(R1-R7)直接衝突時才可局部偏離,且必須寫進 deviation 欄——禁止無聲偏離。`;
 }
 
+const BRAND_VENUE_RE=/店內|店裡|店面|入口處|工作檯|工作台|技師|老闆|師傅|櫃檯|升降機|維修區|施工|安裝區|到店|交車|工具牆|服務區/;
 function validateCommercial(p, brand){
   const bad = [];
   if(!p.shots || !p.shots.length){ return ["無 shots"]; }
+  const venueShots=p.shots.filter(s=>BRAND_VENUE_RE.test(String(s.action_prompt||"")));
+  if(venueShots.length<2) bad.push(`R12 品牌場域露出不足:只有 ${venueShots.length} 鏡出現店家場域(需至少 2 鏡:店內/工作檯/技師互動)`);
+  const lastShot=p.shots[p.shots.length-1];
+  if(!BRAND_VENUE_RE.test(String(lastShot.action_prompt||""))) bad.push("R12 最後一鏡(CTA)未發生在品牌場域,觀眾不知道要去哪裡");
   const s1 = p.shots[0];
   const firstSentence = String(s1.voiceover||"").split(/[,,。!!??]/)[0];
   if(firstSentence.length > 16) bad.push(`R1 第1鏡口播首句 ${firstSentence.length} 字(>15):「${firstSentence}」`);
@@ -5162,6 +5170,23 @@ async function storyboardFrame(prompt,refs){
   if(!r||!r.image) throw new Error("未取得示意圖");
   return `data:${r.mime||"image/png"};base64,${r.image}`;
 }
+async function storyboardSpecs(p){
+  const shots=p.shots||[];
+  const brand=state.brand||{};
+  const prompt=`你是專業分鏡轉譯師:把影片劇本轉成「靜態圖像規格書」,供圖像模型逐鏡作畫。
+品牌:${brand.name||""}(${brand.industry||""});全片氛圍:${p.anchor||""}
+完整腳本:
+${shots.map(s=>`鏡 ${s.id}(${s.dur}s)|旁白:${s.voiceover||"(無)"}|畫面:${s.action_prompt||""}`).join("\n")}
+任務:
+1. character:主角的固定外觀卡——性別、年齡感、髮型、體型、服裝的具體細節。整批圖逐字共用,不可每鏡改寫。
+2. sets:全片出現的場景卡(最多 4 個)。每個場景給 id(A/B/C)與固定陳設描述;品牌場域要寫出具體元素(工作檯、工具牆、升降機、招牌位留白)。
+3. frames:每鏡一筆 {id, set:所用場景卡id, spec:空間性畫面規格(視角與景別/主體在畫面中的位置/動作的關鍵定格/光線方向與來源), must:[畫面必備元素,3-6項], ban:[明確禁止出現的元素]}。
+轉譯鐵律:不得添加腳本沒有的元素;不得省略腳本明寫的元素;時間性描述(瞬間變亮、切換)取「變化完成後」的定格;運鏡標記轉成對應景別(推近=近景特寫、拉遠=全景、俯視=高角度);同場景的鏡必須用同一張場景卡。
+只輸出 JSON:{"character":"","sets":[{"id":"A","desc":""}],"frames":[{"id":1,"set":"A","spec":"","must":[],"ban":[]}]}`;
+  const r=await window.IRIS_SUPABASE.invoke("gemini",{body:{task:"storyboard_spec",input:{prompt:prompt.slice(0,11000)},allowLocalFallback:false}});
+  if(!r?.result?.frames?.length) throw new Error("分鏡轉譯器未回傳規格");
+  return r.result;
+}
 let sbRunning=false;
 async function generateStoryboardFrames(onlyId){
   if(sbRunning)return;
@@ -5182,6 +5207,13 @@ async function generateStoryboardFrames(onlyId){
 【整片氛圍】${state.project?.anchor||""}`;
   const brandRefs=[];
   for(const a of (state.brandAssets||[]).slice(0,2)){ const b=await shrinkToPngB64(typeof a==="string"?a:a.url,480); if(b)brandRefs.push(b); }
+  let specs=state.project?._frameSpecs||null;
+  if(!specs){
+    genStage(st,"分鏡轉譯中:建立角色卡、場景卡與逐鏡圖像規格…",12);
+    try{ specs=await storyboardSpecs(state.project); if(state.project)state.project._frameSpecs=specs; }
+    catch(e){ specs=null; if(st){st.className="status-line";st.textContent=`轉譯器暫不可用(${e.message}),改用直接模式生成…`;} }
+  }
+  const setDesc=id=>{ const s=(specs?.sets||[]).find(x=>x.id===id); return s?.desc||specs?.sets?.[0]?.desc||""; };
   const targets=onlyId?shots.filter(s=>s.id===onlyId):shots;
   let done=0; const failed=[];
   try{
@@ -5194,7 +5226,16 @@ async function generateStoryboardFrames(onlyId){
     if(anchorF&&shot.id!==shots[0].id)refs.push(await shrinkToPngB64(anchorF,480));
     if(prevF&&prevF!==anchorF)refs.push(await shrinkToPngB64(prevF,480));
     for(const b of brandRefs){ if(refs.length<3)refs.push(b); }
-    const prompt=`【本鏡畫面・最高優先,逐字執行】${shot.action_prompt||shot.img_prompt||"品牌日常實景"}
+    const fr=specs?.frames?.find(f=>Number(f.id)===Number(shot.id));
+    const prompt=fr?`【角色卡・全片逐字固定】${specs.character||""}
+【場景卡(${fr.set})・固定陳設】${setDesc(fr.set)}
+【本鏡畫面規格・最高優先】${fr.spec}
+【必備元素・缺一即為失敗作品】${(fr.must||[]).join("、")||"依規格"}
+${fr.ban?.length?`【明確禁止出現】${fr.ban.join("、")}`:""}
+【同機位延續】規格若說「同一機位/延續上一鏡」,構圖、亮度、光源與前一張參考圖幾乎完全相同,只改人物動作表情。
+${consistency}
+【輸出要求】直接輸出一張 9:16 圖片。不要輸出任何文字、說明或問題——只要圖片。`
+    :`【本鏡畫面・最高優先,逐字執行】${shot.action_prompt||shot.img_prompt||"品牌日常實景"}
 【構圖重點】上面描述中的「視角/鏡頭位置」(例如:從車內往外拍、特寫、俯拍)是本張圖的第一要務,必須精準呈現,不可改成旁觀視角。
 【靜態轉譯規則】這是影片分鏡的「單格劇照」:描述若含時間變化(從暗到亮、瞬間切換、轉變、before/after),只呈現【變化完成後的最終狀態】,不要畫中間過程——例如「車燈瞬間變亮」就畫車燈全亮、光束清晰照亮前方的那一刻。句首若有運鏡標記(如【推近】【跟拍】【固定鏡頭】),那是給影片用的:靜態圖改以該運鏡的代表景別呈現(推近=特寫/近景、拉遠=全景、俯視=高角度),標記本身絕不入畫。
 【動作與手勢】描述中的人物動作、手勢、表情必須逐項精準執行,不可替換或省略。常見對照:比讚=單手豎起大拇指、點頭微笑=看向鏡頭微笑、招手=手掌張開揮動。
@@ -7584,6 +7625,7 @@ R8b 分段切點設計:本片會切成前後兩段生成,分界在鏡 ${Math.cei
 R9 最後一鏡是視覺 payoff(同機位、從問題狀態轉為理想狀態)。
 R10【商業敘事邏輯】以廣告創意人思維選定一個敘事視角並全片貫徹:顧客視角(問題→到店→服務→成果)、老闆/技師第一人稱(手藝與工序)、或個人 vlog/UGC 感(不像廣告的真實紀錄)。鐵律:專業工項由店家專業完成、道具與轉場有合理因果、每一鏡都要為品牌信任與到店動機加分。
 R11【鏡頭語言】每鏡 action_prompt=運鏡標記(【推近】【拉遠】【左搖】【右搖】【橫移】【升鏡】【降鏡】【跟拍】【手持微晃】【固定鏡頭】擇一放句首)+主體+單一可見動作+場景+光線,結尾「一鏡到底,不切換場景」;一鏡只一個動作一個運鏡,禁止多地點或時間跳躍。
+R12【品牌露出】全片至少 2 鏡明確發生在品牌場域(店內/工作檯/技師互動,場域字眼要寫進 action_prompt);CTA 鏡必在品牌場域。與品牌服務無因果的畫面即廢鏡。
 
 輸出繁體中文 JSON(只輸出 JSON,不要說明文字):
 {
