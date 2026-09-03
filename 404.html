@@ -5038,7 +5038,8 @@ function creativeSeedBlock(seed){
   const scenes=[...CREATIVE_SCENES].sort(()=>Math.random()-.5).slice(0,2);
   const seasonal=seasonalHints();
   const history=creativeHistory();
-  return `【本版創意指派】手法類別:「${play.cat}」;指定玩法:「${angle}」——整支片必須以這個玩法為骨,執行到位而非點到為止。
+  const userStyle=STYLES.find(s=>s.key===state.styleKey);
+  return `${userStyle?`【客戶指定風格・最高優先】客戶明確選擇了「${userStyle.name}」(${userStyle.desc})。無論下方指派什麼玩法與句式,整支片從第 1 鏡到 CTA 的調性都必須是「${userStyle.name}」——玩法只是切入手段,必須「用${userStyle.name}的方式」執行;玩法自帶調性與客戶風格衝突時,一律以客戶風格為準改造玩法。三個版本都要遵守,無一例外。\n`:""}【本版創意指派】手法類別:「${play.cat}」;指定玩法:「${angle}」——整支片必須以這個玩法為骨,用上方客戶指定的調性執行到位而非點到為止。
 【本版 Hook 句式・強制執行】「${hook.name}」:${hook.how}。參考範例(語感,禁止照抄):「${hook.ex}」。第 1 鏡的口播與畫面必須用這個句式開場;除非被指派,否則【嚴禁】用反問句開場——反問式已被用爛了。
 【無聊禁令】①台詞禁止說明書腔與客套話,要像真人有情緒地講話;②全片至少要有一個「具體到有畫面感」的細節(5 米、87%、三小時前、晚上 11 點的西濱——具體才刺痛);③第 2 鏡結束前必須留下一個讓人非往下看不可的鉤(未解的懸念/未完成的動作)。做不到這三條的腳本,觀眾滑走不會超過 2 秒。
 【本版視覺風格】「${style.name}」(${style.desc})。anchor 欄位必須以這種風格的攝影語言撰寫:${style.photo}。全片每一鏡的光線與色調都服從此風格。
