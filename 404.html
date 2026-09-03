@@ -4934,48 +4934,83 @@ function topicBlock(){
   if(!kw) return "";
   return `【本支主題:${kw}】這是最高優先的內容指令:整支片必須圍繞「${kw}」發想,第 1 鏡的 hook 就要讓觀眾感覺到這個時機點,並自然連結到品牌的服務(不可硬套,要找出兩者的真實關聯)。台詞與畫面都要有這個時節的具體元素與在地感。\n`;
 }
-const CREATIVE_PLAYBOOK=[
-  {cat:"產品美學系",angles:[
-    "電影級產品特寫(macro 質感巡禮,商品是唯一主角)",
-    "復古廣告風(仿 70-90 年代電視廣告的敘事腔與構圖)",
-    "ASMR 工序(擦拭/裝配/鎖緊的特寫與節奏,聲音感視覺化)",
-    "靜轉動開場(第一鏡像商品靜照,突然活過來開始動)",
-    "材質對比(舊vs新、霧vs亮的極近特寫互切)",
-    "光影秀(讓產品的光效/反射成為主秀)",
-    "工具陣列(俯拍整齊工具與零件,強迫症式療癒)"]},
-  {cat:"敘事系",angles:[
-    "短劇式微劇情(30 秒起承轉合,有角色有衝突有解決)",
-    "Before/After 變身結構(全片圍繞一次徹底改變)",
-    "時間流逝(把一次服務濃縮成快轉蒙太奇)",
-    "老闆/技師的一日紀錄(第一人稱 vlog)",
-    "顧客真實案例還原(以真事改編的一支小故事)",
-    "倒敘開場(先看結果再回頭講怎麼發生)",
-    "雙線對照(做了vs沒做的平行剪輯)"]},
-  {cat:"互動社群系",angles:[
-    "街訪快問快答(路人真實反應)",
-    "挑戰型(敢不敢現場實測?)",
-    "數字清單體(3 個你不知道的…)",
-    "常見錯誤大公開(90% 的人都做錯)",
-    "迷因梗口吻(用當下網路語感講專業)",
-    "問答闢謠(觀眾最常問的一題,一次講清)",
-    "留言互動鉤(片尾丟一個讓人想留言的問題)"]},
-  {cat:"情感系",angles:[
-    "溫情時刻(交付成果那一刻的表情與對話)",
-    "職人告白(我為什麼堅持這個工序)",
-    "在地人情味(老客人與店家的日常互動)",
-    "家人視角(為家人的安全/漂亮而做)",
-    "深夜堅持(收店後仍在做的那件小事)",
-    "第一次(新手顧客第一次體驗的忐忑到安心)",
-    "感謝回顧(老闆對客人說的一段真心話)"]},
-  {cat:"節慶時事系",angles:[
-    "節慶限定情境(把服務織進節慶的儀式感)",
-    "節前準備清單(過節前該做的檢查/保養)",
-    "返鄉/出遊前夕(長途前的安心整備)",
-    "禮物提案(把服務包裝成送禮選擇)",
-    "節慶開箱(節慶氛圍中的服務直擊)",
-    "倒數氛圍(以倒數/迎新為敘事框架)",
-    "節後收心(節後回歸日常的整理)"]}
+const RECIPES=[
+  {key:"doc",name:"白描紀實型",origin:"抖音 2025 年度最高讚:勞務市場大爺寫《我的母親》(零技巧、克制、一句話擊穿)",
+   styles:["emotion","process","info"],
+   hooks:["職人告白式","對話偷聽式","情境刺痛式","倒敘結果式"],
+   arc:"像紀錄片一樣安靜開場(一個真實的人在做一件真實的事)→ 不解釋、只呈現細節與動作 → 峰值:一句樸素但擊穿人心的話(由人物自然說出,不是旁白)→ 收束回到日常,CTA 輕聲、不推銷",
+   peak:"「一句樸素卻擊穿人心的話」——由店家或客人在真實情境裡自然說出,不煽情、不上價值、不配特效",
+   camera:"手持紀實為主(【手持微晃】【跟拍】),自然光,少剪、鏡頭略長;禁止棚拍感與花俏運鏡",
+   pace:"慢而穩,允許留白與沉默;raw 勝過 polished,畫面可以不完美",
+   tone:"克制、真誠、零廣告腔;台詞像沒被排練過"},
+  {key:"quest",name:"任務挑戰型",origin:"抖音 637 萬讚「從丹東送媽媽做的飯到長沙」、南翔復原火虎:立任務→過程→真實反應",
+   styles:["funny","process","emotion","twist","contrast"],
+   hooks:["挑戰打賭式","時間壓力式","現場事故式","倒敘結果式"],
+   arc:"第 1 鏡直接立下一個具體、有時限或有難度的任務 → 過程中至少一個真實障礙(卡住、失敗一次、時間不夠)→ 峰值:任務完成瞬間+人物的真實反應(客人脫口而出的那句話、老闆鬆一口氣)→ CTA 順著任務結果而來",
+   peak:"「任務完成瞬間+真實反應」——反應是高潮,不是成品;像朋友咬一口餃子脫口「你去我家了?」那種",
+   camera:"【跟拍】為主體,穿插【推近】看細節、【俯視】看進度;剪輯要有進度感(時間/步驟推進)",
+   pace:"中快,節拍隨任務推進加速;障礙處刻意放慢一拍",
+   tone:"有幹勁、有緊張感、帶一點玩心"},
+  {key:"spectacle",name:"奇觀演示型",origin:"抖音 868 萬讚「塑料桶手搓等離子炮」:平凡器材 × 專業視覺奇觀的反差",
+   styles:["info","contrast","process","funny"],
+   hooks:["數字震撼式","斷言挑釁式","挑戰打賭式","秘密揭露式"],
+   arc:"開場先給觀眾一個平凡到不起眼的東西或場地 → 用一句話立一個「不可能」→ 實際演示、過程可見 → 峰值:奇觀本身(一個讓人「哇」出來的專業畫面)→ 一句話解釋為什麼做得到(專業)→ CTA",
+   peak:"「專業做出來的視覺奇觀」——觀眾親眼看到只有專業才做得到的畫面;不是變身,是能力展示",
+   camera:"【固定鏡頭】演示與【推近】細節交替,關鍵瞬間用【仰視】或【俯視】放大氣勢;實演,不做作",
+   pace:"前段緊(快速鋪陳),奇觀前刻意停半拍,奇觀鏡頭給足時間",
+   tone:"自信、實在、像老師示範,不吹噓"},
+  {key:"persona",name:"人格整活型",origin:"Duolingo / Ryanair / Scrub Daddy:品牌人格化、放下端莊、跟梗快",
+   styles:["funny","twist","info"],
+   hooks:["斷言挑釁式","反向勸退式","秘密揭露式","挑戰打賭式"],
+   arc:"老闆或技師以一個鮮明人格直接對鏡頭開場(毒舌/傲嬌/過度認真/戲精擇一並全片一致)→ 用這個人格講一個真實痛點 → 峰值:笑點引爆(人格與情境的衝突炸開)→ 用同一人格收 CTA(自嘲式)",
+   peak:"「笑點引爆」——人格設定與現實情境碰撞出的那一下,觀眾會想 tag 朋友;不靠特效,靠反應與台詞",
+   camera:"懟臉【推近】、跳切節奏、【手持微晃】增加整活感;表情與肢體是主角",
+   pace:"快、跳切密、梗的節拍要準(鋪梗→停頓→爆)",
+   tone:"放下端莊、敢自嘲、口語到像在聊天;但專業內容要是真的"},
+  {key:"eavesdrop",name:"偷聽劇場型",origin:"對話驅動的爆款:觀眾像偷聽到店裡的真實對話,peak 是那句反轉對白",
+   styles:["funny","twist","emotion","info"],
+   hooks:["對話偷聽式","現場事故式","職人告白式"],
+   arc:"第 1 鏡是一句正在進行中的對話(客人與老闆/技師)→ 對話推進,資訊靠對白而不靠旁白 → 峰值:一句反轉或真心的對白讓氣氛翻轉 → 對話自然帶出 CTA(老闆順口一句)",
+   peak:"「一句翻轉氣氛的對白」——可以是客人的驚訝、老闆的實話、或一句讓人笑出來的回嘴",
+   camera:"過肩鏡與偷拍感機位(【左移】【右移】微幅)、雙人中景、關鍵句切【推近】臉部;像在店裡角落看到的",
+   pace:"對話節奏自然,剪點跟著句子走;不配音樂或只用環境音",
+   tone:"生活化、台詞要像真的有人這樣講話,禁止廣告腔"},
+  {key:"flip",name:"對比翻牌型",origin:"Before/After 爆款:同機位對切,翻牌一秒見高下",
+   styles:["contrast","twist","info","funny"],
+   hooks:["對比暴擊式","倒敘結果式","數字震撼式","時間壓力式"],
+   arc:"開場即對比(左右/前後/上下一眼看出差距)→ 說明差距從哪來(不是誰的錯,是專業與否)→ 專業處理的關鍵一步 → 峰值:翻牌瞬間(同機位、同構圖,從前狀態切到後狀態)→ CTA 綁著結果",
+   peak:"「翻牌瞬間」——這是全引擎唯一允許「瞬間變亮/瞬間變乾淨」類視覺變身的配方;同機位同構圖對切",
+   camera:"同機位對切是靈魂(【固定鏡頭】對比鏡可多用),中段【推近】看工序;前後狀態的機位必須一致",
+   pace:"對比要乾脆,翻牌一刀切;不拖泥帶水",
+   tone:"篤定、俐落、讓畫面說話"},
+  {key:"misdirect",name:"誤導反轉型",origin:"Sketch 喜劇爆款:前段讓你以為在看別的事,揭曉那一下才是全片",
+   styles:["twist","funny"],
+   hooks:["誤導反轉式","現場事故式","反向勸退式"],
+   arc:"前 40% 用構圖與台詞讓觀眾誤以為在看另一件事(誤導必須可信)→ 中段埋一個只有回看才懂的線索 → 峰值:揭曉,一秒讓前面所有畫面換一種意思 → 反轉直接落在品牌服務上,CTA 帶著揭曉的餘韻",
+   peak:"「揭曉反轉」——一個鏡頭讓前面全部畫面換意思;反轉必須與品牌服務直接相關,不能為反轉而反轉",
+   camera:"誤導段用刻意的構圖(遮擋、特寫、只拍局部),揭曉鏡【拉遠】或【左搖】【右搖】揭露全貌",
+   pace:"誤導段平穩讓人放鬆警戒,揭曉一拍到位",
+   tone:"戲謔但聰明;揭曉後要讓觀眾覺得「被騙得心服口服」"},
+  {key:"craft",name:"職人工序型",origin:"ASMR/工序療癒爆款:手藝本身就是內容,完成瞬間讓人舒服",
+   styles:["process","emotion","info"],
+   hooks:["職人告白式","秘密揭露式","情境刺痛式","數字震撼式"],
+   arc:"開場直接進工序(手、工具、材質的極近特寫)→ 逐步推進,每一步都有可見的物理變化 → 峰值:工藝完成的療癒瞬間(最後一道工序收手、成品呈現的那一格)→ 老闆一句為什麼堅持這道工序 → CTA",
+   peak:"「工藝完成的療癒瞬間」——最後一下收手、成品定格;滿足感來自過程被看見,不是特效",
+   camera:"微距【推近】主導,【俯視】看工作檯,【降鏡】從臉到手;聲音設計(工具聲、材質聲)寫進畫面描述",
+   pace:"穩定節拍,像 ASMR;不急,但每鏡都有變化",
+   tone:"安靜、專注、少話;旁白只講關鍵"}
 ];
+function recipeHistory(){ try{ return JSON.parse(localStorage.getItem("iris.recipeHistory")||"[]"); }catch(e){ return []; } }
+function recipeHistoryPush(keys){ try{ const l=recipeHistory().concat(keys); localStorage.setItem("iris.recipeHistory",JSON.stringify(l.slice(-5))); }catch(e){} }
+function pickRecipes(n,styleKey){
+  const hist=recipeHistory();
+  const shuffle=a=>[...a].sort(()=>Math.random()-.5);
+  const compat=RECIPES.filter(r=>!styleKey||r.styles.includes(styleKey));
+  let pool=shuffle(compat.filter(r=>!hist.includes(r.key)));
+  if(pool.length<n) pool=pool.concat(shuffle(compat.filter(r=>!pool.includes(r))));
+  if(pool.length<n) pool=pool.concat(shuffle(RECIPES.filter(r=>!pool.includes(r))));
+  return pool.slice(0,n);
+}
 const CREATIVE_SCENES=[
   "清晨剛拉開鐵門的店內","工作檯與工具牆的特寫世界","雨天的騎樓與濕亮路面","地下停車場",
   "交車給客人的那一刻","午後自然光灑進的店內","郊區試車的空曠路段","收店前的最後一個工序"
@@ -5031,23 +5066,27 @@ function creativeHistoryPush(opening){
   }catch(e){}
 }
 function creativeSeedBlock(seed){
-  const play=seed?.cat?CREATIVE_PLAYBOOK.find(p=>p.cat===seed.cat):CREATIVE_PLAYBOOK[Math.floor(Math.random()*CREATIVE_PLAYBOOK.length)];
-  const angle=seed?.angle||play.angles[Math.floor(Math.random()*play.angles.length)];
+  const recipe=(seed?.recipe&&RECIPES.find(r=>r.key===seed.recipe))||pickRecipes(1,state.styleKey)[0];
   const style=seed?.style||VISUAL_STYLES[Math.floor(Math.random()*VISUAL_STYLES.length)];
-  const hook=seed?.hook||HOOK_FORMULAS[Math.floor(Math.random()*(HOOK_FORMULAS.length-1))]; /* 隨機時排除反問式 */
+  const hook=seed?.hook||HOOK_FORMULAS.find(h=>h.name===recipe.hooks[Math.floor(Math.random()*recipe.hooks.length)])||HOOK_FORMULAS[0];
   const scenes=[...CREATIVE_SCENES].sort(()=>Math.random()-.5).slice(0,2);
   const seasonal=seasonalHints();
   const history=creativeHistory();
   const userStyle=STYLES.find(s=>s.key===state.styleKey);
-  return `${userStyle?`【客戶指定風格・最高優先】客戶明確選擇了「${userStyle.name}」(${userStyle.desc})。無論下方指派什麼玩法與句式,整支片從第 1 鏡到 CTA 的調性都必須是「${userStyle.name}」——玩法只是切入手段,必須「用${userStyle.name}的方式」執行;玩法自帶調性與客戶風格衝突時,一律以客戶風格為準改造玩法。三個版本都要遵守,無一例外。\n`:""}【本版創意指派】手法類別:「${play.cat}」;指定玩法:「${angle}」——整支片必須以這個玩法為骨,用上方客戶指定的調性執行到位而非點到為止。
+  return `${userStyle?`【客戶指定風格・最高優先】客戶明確選擇了「${userStyle.name}」(${userStyle.desc})。整支片從第 1 鏡到 CTA 的調性都必須是「${userStyle.name}」;下方配方是整片藍圖,必須「用${userStyle.name}的方式」執行;衝突時以客戶風格為準改造配方。三個版本都要遵守,無一例外。\n`:""}【本版爆款配方・整片藍圖・最高優先】「${recipe.name}」(反推自:${recipe.origin})
+ ・敘事弧(逐段執行,依鏡數等比分配):${recipe.arc}
+ ・峰值(全片唯一允許的高潮形式):${recipe.peak}。嚴禁借用其他配方的峰值——尤其「燈瞬間變亮、髒污瞬間變乾淨」這類視覺變身,只有「對比翻牌型」可以用,其他配方一律禁止。在峰值鏡的 action_prompt 句首標【峰值】。
+ ・鏡頭語法:${recipe.camera}
+ ・節奏與質感:${recipe.pace}
+ ・語氣:${recipe.tone}
 【本版 Hook 句式・強制執行】「${hook.name}」:${hook.how}。參考範例(語感,禁止照抄):「${hook.ex}」。第 1 鏡的口播與畫面必須用這個句式開場;除非被指派,否則【嚴禁】用反問句開場——反問式已被用爛了。
 【無聊禁令】①台詞禁止說明書腔與客套話,要像真人有情緒地講話;②全片至少要有一個「具體到有畫面感」的細節(5 米、87%、三小時前、晚上 11 點的西濱——具體才刺痛);③第 2 鏡結束前必須留下一個讓人非往下看不可的鉤(未解的懸念/未完成的動作)。做不到這三條的腳本,觀眾滑走不會超過 2 秒。
-【本版視覺風格】「${style.name}」(${style.desc})。anchor 欄位必須以這種風格的攝影語言撰寫:${style.photo}。全片每一鏡的光線與色調都服從此風格。
-【魔法時刻・必備】全片必須設計一個 magic moment 鏡頭——一次瞬間的視覺爽點(例:燈瞬間全亮、髒污一秒變潔淨、老舊瞬間翻新),這一鏡是留存與轉發的核心;在該鏡 action_prompt 句首標【魔法時刻】。
+【真實感優先】爆款的共同點是 raw 勝過 polished:允許不完美的構圖、環境雜音、真實的停頓;人物的真實反應永遠比特效值錢。台詞禁止排練腔。
+【本版視覺風格】「${style.name}」(${style.desc})。anchor 欄位必須以這種風格的攝影語言撰寫:${style.photo}。全片每一鏡的光線與色調都服從此風格,但不得違背配方的鏡頭語法。
 【動態元素・每鏡必備】每鏡 action_prompt 至少寫入一個「會動的環境或材質元素」(蒸氣、光斑流動、雨絲、布料飄動、火花、灰塵微粒、水珠滑落),畫面才不會死板。
-${(play.cat==="節慶時事系"&&seasonal.length)?`【節慶掛鉤】近期節慶:${seasonal.join("、")}。節慶只能作為「動機或背景」(為什麼此刻需要這個服務),主戲永遠是品牌的服務與專業——嚴禁讓節慶活動(烤肉、圍爐、倒數)變成畫面主體。`:""}
+${seasonal.length?`【節慶(可選)】近期節慶:${seasonal.join("、")}。只有當節慶能自然成為「為什麼此刻需要這個服務」的動機時才可帶入,且僅作背景——嚴禁讓節慶活動變成畫面主體;用不上就不要硬塞。`:""}
 【創意定義・鐵律】創意=意料之外+情理之中。每一鏡都必須與品牌服務有直接因果;與品牌無因果的畫面即為廢鏡,寧可平實不可離題。獵奇、無厘頭、堆砌氛圍而不推進主張的內容一律不允許。
-【創意腦暴】寫稿前先在心中想 3 個執行此玩法的不同切入,選「前 1.5 秒最能讓人停下滑動」的那個。場景要具體且貼近品牌真實營運,參考:${scenes.join("、")}(可自創更好的)。
+【創意腦暴】寫稿前先在心中想 3 個執行此配方的不同切入,選「前 1.5 秒最能讓人停下滑動、且峰值最強」的那個。場景要具體且貼近品牌真實營運,參考:${scenes.join("、")}(可自創更好的)。
 ${history.length?`【歷史開場・全部禁用】本版的時空、地點、情境、手法不得與以下任何一條雷同:\n${history.map((h,i)=>` ${i+1}. ${h}`).join("\n")}`:""}`;
 }
 function rewritePrompt(shotCount, targetSec, seed){
@@ -5072,7 +5111,7 @@ R2b【主體類別鎖定】影片中的載具/產品/服務對象必須嚴格符
 R11【鏡頭語言規格・每鏡都要】action_prompt 必須是「一個可讀的鏡頭」,依序寫:運鏡標記+主體+單一可見動作+場景與空間關係+光線,結尾加「一鏡到底,不切換場景」。運鏡標記從清單擇一放句首:【推近】【拉遠】【左搖】【右搖】【左移】【右移】【升鏡】【降鏡】【俯視】【仰視】【跟拍】【手持微晃】【固定鏡頭】。每鏡只允許一個主要動作與一個主要運鏡;禁止一鏡內出現多個地點、時間跳躍或連續兩個以上動作;需要強調氛圍時描述光線與景深,不要堆疊動作。
 【運鏡分佈・強制】全片必須使用至少 4 種不同的運鏡標記;【固定鏡頭】全片至多 2 鏡,且第 1 鏡禁用固定鏡頭——開場就要動起來。滿屏固定鏡頭=偷懶=廢稿。
 R12【品牌露出結構・違反即廢稿】全片至少 2 鏡必須明確發生在品牌場域(店內/工作檯/技師或老闆與顧客互動),action_prompt 要寫出場域字眼(店內、工作檯、技師…);最後一鏡(CTA)必須發生在品牌場域,讓觀眾知道要去哪裡。品牌不露出的廣告不是廣告。
-【交稿前自檢・答不出就自行重寫】輸出前逐題自問:①這支片的單一主張是什麼?②品牌場域在第幾鏡露出?③魔法時刻與主張的直接因果是什麼?④情緒最高點在第幾鏡?那一鏡憑什麼是最高點?⑤hook 開的懸念,在第幾鏡用畫面收掉?任何一題答不清楚,整支重寫後再輸出。自檢過程不要輸出,只輸出最終 JSON。
+【交稿前自檢・答不出就自行重寫】輸出前逐題自問:①這支片的單一主張是什麼?②品牌場域在第幾鏡露出?③【峰值】鏡是否嚴格符合本配方指定的峰值形式(而不是借用了燈變亮之類的他型峰值)?④情緒最高點在第幾鏡?那一鏡憑什麼是最高點?⑤hook 開的懸念,在第幾鏡用畫面收掉?任何一題答不清楚,整支重寫後再輸出。自檢過程不要輸出,只輸出最終 JSON。
 R3 UGC 原生感:口播像老闆本人對客人講話,口語、短句;禁廣告腔、禁「歡迎蒞臨」「專業團隊」「品質保證」類官腔詞。
 R4 每鏡口播 ≤26 字(4 秒唸得完);整片口播禁止前後鏡重複同一句。
 R4b 分段切點設計:本片會切成前後兩段生成,分界在鏡 ${Math.ceil(shotCount/2)} 與鏡 ${Math.ceil(shotCount/2)+1} 之間——鏡 ${Math.ceil(shotCount/2)} 的 voiceover 必須是完整句子並在該鏡內講完(句號收尾),動作要有收束感;鏡 ${Math.ceil(shotCount/2)+1} 開啟新節拍並換機位/景別(人物、服裝、光線一致)。嚴禁一句台詞或連續動作跨越這兩鏡。
@@ -5084,7 +5123,7 @@ R8【最高優先・違反即廢稿】action_prompt 絕對禁止要求畫面產�
  · 需要「招牌/海報/菜單」入鏡時,一律描述成【空白未印刷的素面板材】:例:「一面全新的空白霧面招牌板,純色無任何文字或圖案」「素面空白菜單本」。文字之後由系統字幕層疊上。
  · 需要「品牌 Logo 出現」時,描述成【空白展示位】:例:「牆面留出一塊乾淨的空白區域」。
 R8b 分段切點設計:本片會被切成前後兩段生成,分界在鏡 ${Math.ceil(shotCount/2)} 與鏡 ${Math.ceil(shotCount/2)+1} 之間——這個分界必須是「自然剪接點」:鏡 ${Math.ceil(shotCount/2)} 的 voiceover 必須完整句子並在該鏡內講完(句號收尾),動作有收束感;鏡 ${Math.ceil(shotCount/2)+1} 開新節拍並換機位/景別(主角、服裝、光線一致)。嚴禁一句台詞或連續動作跨越這兩鏡。整支片建議控制在 1-2 個場景內。
-R9 最後一鏡必須是強烈視覺反差的 payoff:同一機位、同一構圖,從「雜亂/老舊/失敗」切到「乾淨/嶄新/成功」,讓觀眾一眼看出前後差異(招牌保持空白,由字幕層合成品牌名)。
+R9 最後一鏡=收束+CTA,payoff 的形式由本版配方的峰值決定;禁止硬加 before/after 視覺反差或「瞬間翻新」作結(只有對比翻牌型配方可以)。若需招牌入鏡保持空白,由字幕層合成品牌名。
 R10【商業敘事邏輯・違反即廢稿】你是廣告創意人,先為本片選定一個敘事視角並全片貫徹(依所選風格擇最合適者):
  a. 顧客視角:遇到問題 → 到店體驗 → 專業服務 → 成果 → 真心推薦
  b. 老闆/技師視角:第一人稱展現手藝、工序、堅持與職人細節(幕後過程、開店日常)
@@ -5100,8 +5139,8 @@ R13e【反轉品質門檻】若本片使用反轉或搞笑橋段:鋪墊必須可
 {
  "anchor":"全片連貫性鎖:【主角外觀(年齡/性別/衣著,具體)】【場景(具體台灣場景)】【攝影風格】【色調】,約80字,所有鏡頭共用",
  "voice":{"gender":"female或male","style":"energetic/warm/calm","reason":"一句話"},
- "hook_type":"數字衝擊|問句|衝突對立|結果前置|POV情境|錯誤揭露|過程療癒|反差迷因 擇一",
- "formula":"PAS|BAB|清單體|反轉|教學實測 擇一",
+ "hook_type":"填【本版 Hook 句式】的名稱",
+ "formula":"填本版配方名稱(如:任務挑戰型)",
  "cta_code":"2-4字私訊暗號",
  "meta":{"industry":"${b.industry}","ratio":"9:16","duration":${targetSec},"style":"${styleName}"},
  "structure_map":[{"ref":"參考片的某段(引用拆解結果)","shots":"對應新腳本鏡號","borrowed":"具體移植了什麼(hook手法/節奏/敘事招式)"}],
@@ -5114,7 +5153,7 @@ R13e【反轉品質門檻】若本片使用反轉或搞笑橋段:鋪墊必須可
  ]
 }
 【結構移植鐵律——這是本任務的核心,不是參考而已】
-M1 hook_type 必須採用拆解結果 hook.type 的同型手法(它為什麼能停住滑動,就用同一招停),不可自行改選。
+M1 借用拆解結果 hook 的「功能」(它靠什麼讓人停下滑動:衝突、好奇、共鳴…),但句式一律採用上方指派的【本版 Hook 句式】;hook_type 欄位填指派的句式名稱。
 M2 敘事段落順序必須逐段對應拆解結果的 structure,每段都要在 structure_map 交代對應到哪幾鏡。
 M3 鏡頭節奏(快慢/切點密度)模仿拆解結果的 pacing。
 M4 「${styleName}」風格只改口吻與包裝,不得改變結構。
@@ -5389,15 +5428,21 @@ async function generateBrandScript(){
   try{ const adv=document.querySelector(".script-advanced"); if(adv)adv.open=true; $("#rw-status").scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){}
   genStage($("#rw-status"),"同時生成 3 個不同創意方向的腳本版本(旗艦創意引擎深度構思中,約 90-150 秒)…",120);
   try{
-    const cats=[...CREATIVE_PLAYBOOK].sort(()=>Math.random()-.5).slice(0,3);
+    const recipes=pickRecipes(3,state.styleKey);
     const styles=[...VISUAL_STYLES].sort(()=>Math.random()-.5).slice(0,3);
-    const hooks=[...HOOK_FORMULAS.slice(0,-1)].sort(()=>Math.random()-.5).slice(0,3); /* 三版三種 hook 句式,反問式不入抽 */
-    const seeds=cats.map((c,i)=>({cat:c.cat,angle:c.angles[Math.floor(Math.random()*c.angles.length)],style:styles[i],hook:hooks[i]}));
+    const usedHooks=new Set();
+    const seeds=recipes.map((r,i)=>{
+      const cand=[...r.hooks].sort(()=>Math.random()-.5);
+      const hookName=cand.find(h=>!usedHooks.has(h))||cand[0];
+      usedHooks.add(hookName);
+      return {recipe:r.key,cat:r.name,style:styles[i],hook:HOOK_FORMULAS.find(h=>h.name===hookName)||HOOK_FORMULAS[0]};
+    });
     const results = await Promise.allSettled(seeds.map(s=>generateOneScript(shotCount,targetSec,s)));
     const versions = results.filter(r=>r.status==="fulfilled").map(r=>r.value);
     if(!versions.length){ throw (results[0].reason||new Error("三個版本都生成失敗,請再試一次")); }
     state.scriptVersions = versions;
     versions.forEach(v=>creativeHistoryPush(v.shots?.[0]?.action_prompt)); /* 三版開場全部記入歷史 */
+    recipeHistoryPush(versions.map(v=>v._seed?.recipe).filter(Boolean)); /* 用過的配方進禁用清單 */
     $("#script-card").classList.remove("hidden");
     const p = versions[0];
     adoptScriptVersion(0);
