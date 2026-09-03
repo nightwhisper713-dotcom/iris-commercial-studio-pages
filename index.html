@@ -4934,15 +4934,76 @@ function topicBlock(){
   if(!kw) return "";
   return `【本支主題:${kw}】這是最高優先的內容指令:整支片必須圍繞「${kw}」發想,第 1 鏡的 hook 就要讓觀眾感覺到這個時機點,並自然連結到品牌的服務(不可硬套,要找出兩者的真實關聯)。台詞與畫面都要有這個時節的具體元素與在地感。\n`;
 }
-const CREATIVE_ANGLES=[
-  "數字清單體(3 個你不知道的…)","對比實測(A/B 直接比給你看)","顧客真實案例還原",
-  "老闆/技師的一日紀錄","常見錯誤大公開(90% 的人都做錯)","街頭快問快答",
-  "挑戰型(敢不敢現場測?)","反直覺冷知識開場","開箱/工序直擊","第一人稱告白(我為什麼堅持…)"
+const CREATIVE_PLAYBOOK=[
+  {cat:"產品美學系",angles:[
+    "電影級產品特寫(macro 質感巡禮,商品是唯一主角)",
+    "復古廣告風(仿 70-90 年代電視廣告的敘事腔與構圖)",
+    "ASMR 工序(擦拭/裝配/鎖緊的特寫與節奏,聲音感視覺化)",
+    "靜轉動開場(第一鏡像商品靜照,突然活過來開始動)",
+    "材質對比(舊vs新、霧vs亮的極近特寫互切)",
+    "光影秀(讓產品的光效/反射成為主秀)",
+    "工具陣列(俯拍整齊工具與零件,強迫症式療癒)"]},
+  {cat:"敘事系",angles:[
+    "短劇式微劇情(30 秒起承轉合,有角色有衝突有解決)",
+    "Before/After 變身結構(全片圍繞一次徹底改變)",
+    "時間流逝(把一次服務濃縮成快轉蒙太奇)",
+    "老闆/技師的一日紀錄(第一人稱 vlog)",
+    "顧客真實案例還原(以真事改編的一支小故事)",
+    "倒敘開場(先看結果再回頭講怎麼發生)",
+    "雙線對照(做了vs沒做的平行剪輯)"]},
+  {cat:"互動社群系",angles:[
+    "街訪快問快答(路人真實反應)",
+    "挑戰型(敢不敢現場實測?)",
+    "數字清單體(3 個你不知道的…)",
+    "常見錯誤大公開(90% 的人都做錯)",
+    "迷因梗口吻(用當下網路語感講專業)",
+    "問答闢謠(觀眾最常問的一題,一次講清)",
+    "留言互動鉤(片尾丟一個讓人想留言的問題)"]},
+  {cat:"情感系",angles:[
+    "溫情時刻(交付成果那一刻的表情與對話)",
+    "職人告白(我為什麼堅持這個工序)",
+    "在地人情味(老客人與店家的日常互動)",
+    "家人視角(為家人的安全/漂亮而做)",
+    "深夜堅持(收店後仍在做的那件小事)",
+    "第一次(新手顧客第一次體驗的忐忑到安心)",
+    "感謝回顧(老闆對客人說的一段真心話)"]},
+  {cat:"節慶時事系",angles:[
+    "節慶限定情境(把服務織進節慶的儀式感)",
+    "節前準備清單(過節前該做的檢查/保養)",
+    "返鄉/出遊前夕(長途前的安心整備)",
+    "禮物提案(把服務包裝成送禮選擇)",
+    "節慶開箱(節慶氛圍中的服務直擊)",
+    "倒數氛圍(以倒數/迎新為敘事框架)",
+    "節後收心(節後回歸日常的整理)"]}
 ];
 const CREATIVE_SCENES=[
   "清晨剛拉開鐵門的店內","工作檯與工具牆的特寫世界","雨天的騎樓與濕亮路面","地下停車場",
   "交車給客人的那一刻","午後自然光灑進的店內","郊區試車的空曠路段","收店前的最後一個工序"
 ];
+const VISUAL_STYLES=[
+  {key:"neon",name:"霓虹夜景",desc:"濕潤路面反光、青紫與橘黃霓虹互補色、深邃陰影",
+   photo:"35mm f/1.8 淺景深實拍感,霓虹溢光與濕地反射,輕微鏡頭光暈,高 ISO 自然噪點,暗部保留細節"},
+  {key:"jp",name:"日系清透",desc:"自然窗光、空氣感、低對比柔和色",
+   photo:"50mm 定焦,過曝半檔的空氣感,低飽和柔和色調,生活抓拍式構圖,窗光方向明確,畫面留白"},
+  {key:"cine",name:"電影 Teal&Orange",desc:"青色陰影、橘色膚色、寬銀幕氛圍",
+   photo:"變形寬銀幕視感,teal 陰影與橘色膚調分離,柔和頂光+輪廓光,淺景深,細膩電影顆粒"},
+  {key:"retro",name:"復古菲林",desc:"底片色偏、暖黃褪色、時代感",
+   photo:"Kodak 底片色科學,暖黃偏色與輕微褪色,明顯膠片顆粒,四角暗角,復古年代的服裝與陳設細節"},
+  {key:"noir",name:"黑金高對比",desc:"深黑背景、金色輪廓光、精品質感",
+   photo:"低調棚燈,單側金色輪廓光,深黑漸層背景,鏡面反射控制,商品廣告棚拍質感,銳利微距細節"},
+  {key:"ugc",name:"自然日光 UGC",desc:"手機直出、真實生活感、零修圖",
+   photo:"手機主鏡頭直出感,自然日光,輕微手持構圖不完美,真實環境雜物入鏡,膚質與材質保留原生紋理"}
+];
+function seasonalHints(){
+  const m=new Date().getMonth()+1,d=new Date().getDate();
+  const hits=[];
+  const near=(mm,dd,label,span)=>{const t=new Date(new Date().getFullYear(),mm-1,dd);const diff=(t-new Date())/864e5;if(diff>-7&&diff<(span||35))hits.push(label);};
+  near(1,29,"農曆過年(圍爐、返鄉、走春)",45);near(2,14,"西洋情人節");near(5,10,"母親節(五月第二個週日)");
+  near(6,20,"端午連假(出遊)");near(8,8,"父親節");near(9,29,"中秋節(烤肉、團圓、返鄉)");
+  near(10,10,"雙十連假(長途出遊)");near(12,25,"聖誕節");near(12,31,"跨年(迎新、倒數)");
+  if(m===7||m===8)hits.push("暑假出遊季");
+  return hits;
+}
 function creativeHistory(){
   try{ return JSON.parse(localStorage.getItem("iris.creativeHistory")||"[]"); }catch(e){ return []; }
 }
@@ -4953,15 +5014,22 @@ function creativeHistoryPush(opening){
     localStorage.setItem("iris.creativeHistory",JSON.stringify(list.slice(-10)));
   }catch(e){}
 }
-function creativeSeedBlock(){
-  const angle=CREATIVE_ANGLES[Math.floor(Math.random()*CREATIVE_ANGLES.length)];
+function creativeSeedBlock(seed){
+  const play=seed?.cat?CREATIVE_PLAYBOOK.find(p=>p.cat===seed.cat):CREATIVE_PLAYBOOK[Math.floor(Math.random()*CREATIVE_PLAYBOOK.length)];
+  const angle=seed?.angle||play.angles[Math.floor(Math.random()*play.angles.length)];
+  const style=seed?.style||VISUAL_STYLES[Math.floor(Math.random()*VISUAL_STYLES.length)];
   const scenes=[...CREATIVE_SCENES].sort(()=>Math.random()-.5).slice(0,2);
+  const seasonal=seasonalHints();
   const history=creativeHistory();
-  return `【創意腦暴・寫腳本前先做】你是這支片的創意總監。先在心中想出 5 個「截然不同」的創意方向——不同視角、不同時空、不同敘事手法,其中至少 1 個必須是下方靈感清單以外的原創手法。逐一自評「前 1.5 秒能不能讓人停下滑動」,選出最強的一個方向來寫;若最強的方向與歷史開場雷同,改用次強的。
-【靈感參考・不限於此】手法舉例:「${angle}」;場景舉例:${scenes.join("、")}。這些只是起點,發明更好的方法會得到更高評價。場景必須具體且貼近品牌真實營運。
-${history.length?`【歷史開場・全部禁用】以下是前幾版已用過的開場,本版的時空、地點、情境、手法都不得與其中任何一條雷同:\n${history.map((h,i)=>` ${i+1}. ${h}`).join("\n")}`:""}`;
+  return `【本版創意指派】手法類別:「${play.cat}」;指定玩法:「${angle}」——整支片必須以這個玩法為骨,執行到位而非點到為止。
+【本版視覺風格】「${style.name}」(${style.desc})。anchor 欄位必須以這種風格的攝影語言撰寫:${style.photo}。全片每一鏡的光線與色調都服從此風格。
+【魔法時刻・必備】全片必須設計一個 magic moment 鏡頭——一次瞬間的視覺爽點(例:燈瞬間全亮、髒污一秒變潔淨、老舊瞬間翻新),這一鏡是留存與轉發的核心;在該鏡 action_prompt 句首標【魔法時刻】。
+【動態元素・每鏡必備】每鏡 action_prompt 至少寫入一個「會動的環境或材質元素」(蒸氣、光斑流動、雨絲、布料飄動、火花、灰塵微粒、水珠滑落),畫面才不會死板。
+${seasonal.length?`【節慶掛鉤・可選用】近期節慶:${seasonal.join("、")}。若手法類別是節慶時事系則必須採用其一;其他類別可自然帶入,不硬塞。`:""}
+【創意腦暴】寫稿前先在心中想 3 個執行此玩法的不同切入,選「前 1.5 秒最能讓人停下滑動」的那個。場景要具體且貼近品牌真實營運,參考:${scenes.join("、")}(可自創更好的)。
+${history.length?`【歷史開場・全部禁用】本版的時空、地點、情境、手法不得與以下任何一條雷同:\n${history.map((h,i)=>` ${i+1}. ${h}`).join("\n")}`:""}`;
 }
-function rewritePrompt(shotCount, targetSec){
+function rewritePrompt(shotCount, targetSec, seed){
   const b = state.brand || {name:"本品牌",industry:"美業",tone:"親切鄰家",cta:"",vmode:"daylight",banned:[],desc:""};
   const styleSel = STYLES.find(s=>s.key===state.styleKey)||STYLES[0];
   const styleName = styleSel.name;
@@ -4973,7 +5041,7 @@ ${JSON.stringify(state.analysis)}
 
 ${topicBlock()}品牌:${b.name}(產業:${b.industry}${b.industryPath&&b.industryPath!==b.industry?`;完整分類:${b.industryPath}`:""});口吻:${b.tone};風格:${styleName}(${styleDesc});視覺:${b.vmode==="night"?"品牌夜色(霓虹靛紫夜景)":"日常實景(台灣街頭寫實)"};CTA:${b.cta||"請依品牌與行業自動設計一句自然的 CTA"};禁語:${b.banned.join("、")||"無"};品牌資料:${b.desc||"無"}${b.visualStyle? "\n品牌官方視覺風格(anchor 的攝影/色調描述必須以此為基礎):"+b.visualStyle : ""}
 
-${creativeSeedBlock()}
+${creativeSeedBlock(seed)}
 【結構落實】上面拆解 JSON 中每個 segment 的 role 與 purpose,是對應鏡頭的「敘事任務」——逐鏡完成該任務,但畫面、情境、台詞必須全新杜撰,禁止把 purpose 的文字直接翻譯成台詞或畫面描述。
 
 【商業硬規則——違反任何一條即為失敗腳本】
@@ -5102,9 +5170,15 @@ async function generateStoryboardFrames(onlyId){
   if(!shots.length){ if(st){st.className="status-line err";st.textContent="✗ 請先生成腳本";} return; }
   if(!window.IRIS_SUPABASE?.configured?.()||!window.IRIS_SUPABASE.user()){ if(st){st.className="status-line err";st.textContent="✗ 請先登入";} return; }
   sbRunning=true;
-  const consistency=`【一致性鐵律】整個分鏡系列屬於同一支影片:同一位主角、同一件服裝、同一個場地、同一種光線色溫與畫質。附上的參考圖是已定稿的分鏡與場地——人物長相、髮型、衣著、空間陳設必須與參考圖完全一致,只允許改變動作與構圖。
+  const vstyle=state.project?._style;
+  const photoLang=vstyle
+    ? `【攝影風格・全片統一】「${vstyle.name}」(${vstyle.desc}):${vstyle.photo}。`
+    : `【攝影風格】寫實手持 UGC 質感,自然光線,不要棚拍廣告感。`;
+  const consistency=`${photoLang}
+【反塑膠感鐵則】必須像真實攝影師拍出的一格:光線要有明確方向與來源;皮膚、金屬、布料保留真實紋理與微小瑕疵;背景要有真實生活痕跡(使用過的工具、輕微磨損)。禁止:均勻無影的打光、過度平滑的磨皮質感、完美對稱的置中構圖、塑膠感高光。
+【一致性鐵律】整個分鏡系列屬於同一支影片:同一位主角、同一件服裝、同一個場地、同一種光線色溫與畫質。附上的參考圖是已定稿的分鏡與場地——人物長相、髮型、衣著、空間陳設必須與參考圖完全一致,只允許改變動作與構圖。
 【光線基準】整片的曝光、色溫、對比以參考圖為基準:除非本鏡描述明確要求變亮或變暗,否則環境亮度與色調必須與參考圖一致,不可自行加溫、提亮或改變路燈顏色。描述要求的亮度變化(如車燈變亮)只改該光源,環境基準不動。
-【禁令】畫面中不得出現任何文字、字母、數字、Logo、招牌字;不得出現本鏡描述以外的任何人物。9:16 直式,寫實手持 UGC 質感,不要棚拍廣告感。
+【禁令】畫面中不得出現任何文字、字母、數字、Logo、招牌字;不得出現本鏡描述以外的任何人物。9:16 直式。
 【整片氛圍】${state.project?.anchor||""}`;
   const brandRefs=[];
   for(const a of (state.brandAssets||[]).slice(0,2)){ const b=await shrinkToPngB64(typeof a==="string"?a:a.url,480); if(b)brandRefs.push(b); }
@@ -5153,8 +5227,8 @@ function genStage(el,text,expectSec){
   el.className="status-line run";
   el.innerHTML=`<span class="gen-line"><span class="gen-msg"><svg class="ico an-spin" aria-hidden="true"><use href="#i-refresh"></use></svg>${escapeHtml(text)}</span><span class="bar" style="--t:${Math.max(3,expectSec||50)}s"><i></i></span></span>`;
 }
-async function generateOneScript(shotCount,targetSec){
-  const text = await irisGenerate("script-default", [{text: rewritePrompt(shotCount, targetSec)}], true);
+async function generateOneScript(shotCount,targetSec,seed){
+  const text = await irisGenerate("script-default", [{text: rewritePrompt(shotCount, targetSec, seed)}], true);
   const p = parseJsonLoose(text);
   if(!Array.isArray(p.shots) || !p.shots.length) throw new Error("腳本缺 shots");
   const pd = plannedDurs(p.shots.length);
@@ -5164,6 +5238,8 @@ async function generateOneScript(shotCount,targetSec){
     try{ await microFixScript(p,violations); violations=validateCommercial(p,state.brand); }catch(e){ break; }
   }
   p._real = true;
+  p._seed = seed||null; /* 記住本版的手法類別與視覺風格,示意圖與影片沿用 */
+  p._style = seed?.style||null;
   p.audio = {music:"user-upload", voiceover:"tts"};
   const topicNow = ($("#topic-kw")?.value||"").trim();
   if(topicNow) p.meta = Object.assign({}, p.meta, {topic: topicNow});
@@ -5181,9 +5257,10 @@ function adoptScriptVersion(idx){
   try{ for(const k of Object.keys(frameImgCache))delete frameImgCache[k]; }catch(e){}
   $("#script-json").value=JSON.stringify(p,null,2);
   const v=p._violations||[];
+  const flavor=p._seed?`【${p._seed.cat}・${p._style?.name||""}】`:"";
   $("#rw-status").textContent=v.length
-    ? `版本 ${idx+1}:仍有 ${v.length} 條建議人工確認:${v.join(";")}`
-    : `版本 ${idx+1} ✓ 通過商業檢查|hook:${p.hook_type||"?"}|公式:${p.formula||"?"}|暗號:「${p.cta_code||"?"}」`;
+    ? `版本 ${idx+1} ${flavor}:仍有 ${v.length} 條建議人工確認:${v.join(";")}`
+    : `版本 ${idx+1} ${flavor}✓ 通過商業檢查|hook:${p.hook_type||"?"}|公式:${p.formula||"?"}|暗號:「${p.cta_code||"?"}」`;
   $("#rw-status").className=v.length?"status-line err":"status-line ok";
   try{ installScriptReview({keepProject:true,riskDemo:false}); }catch(e){}
   try{ for(const pill of $$("#script-versions button"))pill.classList.toggle("active",Number(pill.dataset.scriptVersion)===idx); }catch(e){}
@@ -5197,7 +5274,10 @@ async function generateBrandScript(){
   try{ const adv=document.querySelector(".script-advanced"); if(adv)adv.open=true; $("#rw-status").scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){}
   genStage($("#rw-status"),"同時生成 3 個不同創意方向的腳本版本(各自腦暴+商業檢查,約 60-100 秒)…",80);
   try{
-    const results = await Promise.allSettled([0,1,2].map(()=>generateOneScript(shotCount,targetSec)));
+    const cats=[...CREATIVE_PLAYBOOK].sort(()=>Math.random()-.5).slice(0,3);
+    const styles=[...VISUAL_STYLES].sort(()=>Math.random()-.5).slice(0,3);
+    const seeds=cats.map((c,i)=>({cat:c.cat,angle:c.angles[Math.floor(Math.random()*c.angles.length)],style:styles[i]}));
+    const results = await Promise.allSettled(seeds.map(s=>generateOneScript(shotCount,targetSec,s)));
     const versions = results.filter(r=>r.status==="fulfilled").map(r=>r.value);
     if(!versions.length){ throw (results[0].reason||new Error("三個版本都生成失敗,請再試一次")); }
     state.scriptVersions = versions;
@@ -5206,7 +5286,8 @@ async function generateBrandScript(){
     const p = versions[0];
     adoptScriptVersion(0);
     const extra = versions.length<3 ? `(${3-versions.length} 個版本生成失敗;再按一次生成會重出 3 版)` : "";
-    $("#rw-status").textContent = `✓ 已生成 ${versions.length} 個創意版本${extra}——點右上「腳本版本 1/2/3」切換比較,選定後直接審核。`;
+    const menu = versions.map((vp,i)=>`${i+1}=${vp._seed?.cat||"?"}·${vp._style?.name||"?"}`).join(" | ");
+    $("#rw-status").textContent = `✓ 三種廣告提案已就緒:${menu}${extra}——點右上「腳本版本 1/2/3」切換比較。`;
     $("#rw-status").className = "status-line ok";
     window.setTimeout(()=>{ $("#script-review-demo")?.scrollIntoView({behavior:"smooth",block:"start"}); },150);
     blockedCustomerDataFetch(`${SUPABASE_URL}/rest/v1/iris_patterns`, {
