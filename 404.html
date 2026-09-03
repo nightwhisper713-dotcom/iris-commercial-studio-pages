@@ -5072,7 +5072,7 @@ R2b【主體類別鎖定】影片中的載具/產品/服務對象必須嚴格符
 R11【鏡頭語言規格・每鏡都要】action_prompt 必須是「一個可讀的鏡頭」,依序寫:運鏡標記+主體+單一可見動作+場景與空間關係+光線,結尾加「一鏡到底,不切換場景」。運鏡標記從清單擇一放句首:【推近】【拉遠】【左搖】【右搖】【左移】【右移】【升鏡】【降鏡】【俯視】【仰視】【跟拍】【手持微晃】【固定鏡頭】。每鏡只允許一個主要動作與一個主要運鏡;禁止一鏡內出現多個地點、時間跳躍或連續兩個以上動作;需要強調氛圍時描述光線與景深,不要堆疊動作。
 【運鏡分佈・強制】全片必須使用至少 4 種不同的運鏡標記;【固定鏡頭】全片至多 2 鏡,且第 1 鏡禁用固定鏡頭——開場就要動起來。滿屏固定鏡頭=偷懶=廢稿。
 R12【品牌露出結構・違反即廢稿】全片至少 2 鏡必須明確發生在品牌場域(店內/工作檯/技師或老闆與顧客互動),action_prompt 要寫出場域字眼(店內、工作檯、技師…);最後一鏡(CTA)必須發生在品牌場域,讓觀眾知道要去哪裡。品牌不露出的廣告不是廣告。
-【交稿前自檢・答不出就自行重寫】輸出前逐題自問:①這支片的單一主張是什麼?②品牌場域在第幾鏡露出?③魔法時刻與主張的直接因果是什麼?任何一題答不清楚,整支重寫後再輸出。自檢過程不要輸出,只輸出最終 JSON。
+【交稿前自檢・答不出就自行重寫】輸出前逐題自問:①這支片的單一主張是什麼?②品牌場域在第幾鏡露出?③魔法時刻與主張的直接因果是什麼?④情緒最高點在第幾鏡?那一鏡憑什麼是最高點?⑤hook 開的懸念,在第幾鏡用畫面收掉?任何一題答不清楚,整支重寫後再輸出。自檢過程不要輸出,只輸出最終 JSON。
 R3 UGC 原生感:口播像老闆本人對客人講話,口語、短句;禁廣告腔、禁「歡迎蒞臨」「專業團隊」「品質保證」類官腔詞。
 R4 每鏡口播 ≤26 字(4 秒唸得完);整片口播禁止前後鏡重複同一句。
 R4b 分段切點設計:本片會切成前後兩段生成,分界在鏡 ${Math.ceil(shotCount/2)} 與鏡 ${Math.ceil(shotCount/2)+1} 之間——鏡 ${Math.ceil(shotCount/2)} 的 voiceover 必須是完整句子並在該鏡內講完(句號收尾),動作要有收束感;鏡 ${Math.ceil(shotCount/2)+1} 開啟新節拍並換機位/景別(人物、服裝、光線一致)。嚴禁一句台詞或連續動作跨越這兩鏡。
@@ -5090,6 +5090,11 @@ R10【商業敘事邏輯・違反即廢稿】你是廣告創意人,先為本片�
  b. 老闆/技師視角:第一人稱展現手藝、工序、堅持與職人細節(幕後過程、開店日常)
  c. 個人 vlog/UGC 視角:像朋友隨手拍的真實紀錄,完全不像廣告,但看完會想私訊這家店
 無論哪個視角,三條鐵律:①專業工項永遠由店家專業完成——顧客不會自己路邊換魚眼大燈,能動手的只有老闆或技師 ②每個道具、每次場景轉換都要有合理因果,嚴禁無來由道具(沒說明用途的盒子、憑空出現的工具) ③全片唯一目的:讓觀眾對這家店產生信任與到店動機,每一鏡都要能回答「這鏡如何幫品牌加分?」。
+R13【留存結構・逐鏡卡點】每一鏡都必須改變觀眾「知道的事」或「感受到的情緒」之一;若刪掉某鏡對理解與情緒毫無影響,該鏡就是廢鏡,重寫。觀眾滑走大多發生在中段,不在開頭——每鏡都要給一個「再看一鏡」的理由。
+R13b【開環必閉環】hook 開出的懸念或承諾,必須在結尾前「用畫面」給出答案——結果要拍出來讓人看見,不能只靠口播講。沒有 payoff 的懸念是欺騙,觀眾下次就不會再停留。
+R13c【中段視覺重置】鏡 ${Math.ceil(shotCount/2)+1}(全片一半處)必須是一次強視覺轉換:換場景、景別大跳或節奏突變,把快滑走的注意力拉回來——這與 R8b 的分段切點重合,一次完成。
+R13d【痛點具象化】禁用「困擾」「煩惱」「問題」「危險」等抽象痛點詞;痛點必須寫成一個具體的「卡住瞬間」——不是「夜間視線不好」,而是「對向來車一過,你眼前全黑兩秒」。具體才刺痛,抽象沒人痛。
+R13e【反轉品質門檻】若本片使用反轉或搞笑橋段:鋪墊必須可信到觀眾真的會信,反轉才有力。鋪墊太假,反轉就廉價;鋪墊太明顯,驚喜就沒了。
 
 輸出繁體中文 JSON(只輸出 JSON):
 {
@@ -5127,6 +5132,15 @@ function validateCommercial(p, brand){
   const s1 = p.shots[0];
   const firstSentence = String(s1.voiceover||"").split(/[,,。!!??]/)[0];
   if(firstSentence.length > 16) bad.push(`R1 第1鏡口播首句 ${firstSentence.length} 字(>15):「${firstSentence}」`);
+  if(!String(s1.caption?.main||"").trim()) bad.push("R1 第1鏡缺主標字卡——靜音滑到也要看得懂 hook");
+  const CAM_TAGS=["推近","拉遠","左搖","右搖","左移","右移","升鏡","降鏡","俯視","仰視","跟拍","手持微晃","固定鏡頭"];
+  const tagOf=s=>{const m=String(s.action_prompt||"").match(/【([^】]{2,5})】/g)||[];for(const t of m){const n=t.slice(1,-1);if(CAM_TAGS.includes(n))return n;}return null;};
+  const camTags=p.shots.map(tagOf).filter(Boolean);
+  const camKinds=new Set(camTags);
+  const needKinds=Math.min(4,p.shots.length-1);
+  if(camKinds.size<needKinds) bad.push(`R11 運鏡貧乏:全片只用了 ${camKinds.size} 種運鏡(需至少 ${needKinds} 種,滿屏同一運鏡=偷懶)`);
+  if(tagOf(s1)==="固定鏡頭") bad.push("R11 第 1 鏡用【固定鏡頭】開場(禁止——開場就要動起來)");
+  if(camTags.filter(t=>t==="固定鏡頭").length>2) bad.push("R11 【固定鏡頭】超過 2 鏡");
   p.shots.forEach((s,i)=>{
     const vo = String(s.voiceover||"");
     const cap = Math.round((s.dur||4) * 5.5); // 口播上限:每秒約 5 字,留呼吸空間
@@ -5163,10 +5177,11 @@ async function microFixScript(p,violations){
   const targets=[...new Set(violations.map(v=>{const m=String(v).match(/第\s*(\d+)\s*鏡|鏡\s*(\d+)/);return m?Number(m[1]||m[2]):null;}).filter(Boolean))];
   const list=targets.length?p.shots.filter(s=>targets.includes(s.id)):p.shots;
   if(!list.length)return p;
-  const prompt=`你是文案醫生。只改寫下列鏡頭的 voiceover,使其完全符合規則;語意、品牌口吻與節奏保持不變,其他欄位一律不動。\n必須符合的規則:\n- ${violations.map(v=>String(v)).join("\n- ")}\n【極重要】「字」指中文字元數,輸出前逐字數過;寧可短、絕不可超過上限。\n待修句子:\n${list.map(s=>`鏡 ${s.id}(上限 ${s.dur*5} 字${s.id===1?",且首句另限 15 字":""}):「${s.voiceover}」`).join("\n")}\n只輸出 JSON:{"shots":[{"id":鏡號,"voiceover":"改寫後的句子"}]}`;
+  const camIssue=violations.some(v=>/R11|運鏡|固定鏡頭/.test(String(v)));
+  const prompt=`你是文案醫生。只修正下列鏡頭,使其完全符合規則;語意、品牌口吻與節奏保持不變,未列規則的欄位一律不動。\n必須符合的規則:\n- ${violations.map(v=>String(v)).join("\n- ")}\n【極重要】「字」指中文字元數,輸出前逐字數過;寧可短、絕不可超過上限。${camIssue?`\n【運鏡修正】若規則涉及運鏡(R11):改該鏡 action_prompt 句首的運鏡標記(從【推近】【拉遠】【左搖】【右搖】【左移】【右移】【升鏡】【降鏡】【俯視】【仰視】【跟拍】【手持微晃】中擇一合適者),只換標記與必要的鏡頭描述銜接,動作內容與場景不變。`:""}\n待修鏡頭:\n${list.map(s=>`鏡 ${s.id}(口播上限 ${s.dur*5} 字${s.id===1?",且首句另限 15 字":""}):「${s.voiceover}」${camIssue?`|畫面:「${s.action_prompt||""}」`:""}`).join("\n")}\n只輸出 JSON:{"shots":[{"id":鏡號,"voiceover":"改寫後的句子(未改則原樣)"${camIssue?`,"action_prompt":"改寫後的畫面(未改則省略此欄)"`:""}}]}`;
   const text=await irisGenerate("fix",[{text:prompt}],true);
   const fixed=parseJsonLoose(text);
-  for(const f of (fixed.shots||[])){ const s=p.shots.find(x=>x.id===Number(f.id)); if(s&&f.voiceover)s.voiceover=String(f.voiceover); }
+  for(const f of (fixed.shots||[])){ const s=p.shots.find(x=>x.id===Number(f.id)); if(!s)continue; if(f.voiceover)s.voiceover=String(f.voiceover); if(f.action_prompt)s.action_prompt=String(f.action_prompt); }
   return p;
 }
 function dataUrlToB64(u){ const i=String(u).indexOf(","); return i>=0?String(u).slice(i+1):String(u); }
@@ -5184,6 +5199,30 @@ function shrinkToPngB64(dataUrl,maxW){
     img.src=dataUrl;
   });
 }
+function shrinkToJpegB64(dataUrl,maxW){ /* 視覺驗收用:小圖+JPEG,壓在 gemini 函式 256KB 請求上限內 */
+  return new Promise(res=>{
+    const img=new Image();
+    img.onload=()=>{ try{
+      const sc=Math.min(1,(maxW||320)/img.width);
+      const c=document.createElement("canvas");
+      c.width=Math.max(1,Math.round(img.width*sc)); c.height=Math.max(1,Math.round(img.height*sc));
+      c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+      res(dataUrlToB64(c.toDataURL("image/jpeg",0.72)));
+    }catch(e){res(null);} };
+    img.onerror=()=>res(null);
+    img.src=dataUrl;
+  });
+}
+async function frameQualityCheck(fr,url){
+  try{
+    const img=await shrinkToJpegB64(url,320);
+    if(!img)return null;
+    const spec=`景別:${fr.size||"未指定"}|機位:${fr.cam||"未指定"}|定格瞬間:${fr.moment||"未指定"}|光線:${fr.light||"未指定"}|畫面規格:${fr.spec||""}|必備元素:${(fr.must||[]).join("、")||"無"}|禁止出現:${(fr.ban||[]).join("、")||"無"}`;
+    const r=await window.IRIS_SUPABASE.invoke("gemini",{body:{task:"frame_check",input:{spec:spec.slice(0,2800),image:img},allowLocalFallback:false}});
+    if(r?.result&&typeof r.result.ok==="boolean")return r.result;
+  }catch(e){}
+  return null; /* 驗收器本身故障不擋交付 */
+}
 async function storyboardFrame(prompt,refs){
   const r=await window.IRIS_SUPABASE.invoke("storyboard",{body:{prompt,references:(refs||[]).filter(Boolean).slice(0,3)}});
   if(!r||!r.image) throw new Error("未取得示意圖");
@@ -5199,9 +5238,11 @@ ${shots.map(s=>`鏡 ${s.id}(${s.dur}s)|旁白:${s.voiceover||"(無)"}|畫面:${s
 任務:
 1. character:主角的固定外觀卡——性別、年齡感、髮型、體型、服裝的具體細節。整批圖逐字共用,不可每鏡改寫。
 2. sets:全片出現的場景卡(最多 4 個)。每個場景給 id(A/B/C)與固定陳設描述;品牌場域要寫出具體元素(工作檯、工具牆、升降機、招牌位留白)。
-3. frames:每鏡一筆 {id, set:所用場景卡id, spec:空間性畫面規格(視角與景別/主體在畫面中的位置/動作的關鍵定格/光線方向與來源), must:[畫面必備元素,3-6項], ban:[明確禁止出現的元素]}。
-轉譯鐵律:不得添加腳本沒有的元素;不得省略腳本明寫的元素;時間性描述(瞬間變亮、切換)取「變化完成後」的定格;運鏡標記轉成對應景別(推近=近景特寫、拉遠=全景、俯視=高角度);同場景的鏡必須用同一張場景卡。
-只輸出 JSON:{"character":"","sets":[{"id":"A","desc":""}],"frames":[{"id":1,"set":"A","spec":"","must":[],"ban":[]}]}`;
+3. frames:每鏡一筆 {id, set:所用場景卡id, size:景別(極特寫/特寫/中景/全景 擇一), cam:機位(相機在哪個位置、朝哪個方向、什麼高度角度——例:「相機位於儀表板前方,朝駕駛面部,微仰角」), moment:定格瞬間(這鏡的動作時序中,圖要拍哪一刻), light:光線(方向、來源、色溫), spec:空間性畫面規格(主體在畫面中的位置與姿態), must:[畫面必備元素,3-6項], ban:[明確禁止出現的元素]}。
+【運鏡→定格對照表・必須遵守】運鏡是時間中的路徑,靜態圖只能拍一瞬——一律取「運鏡終點」的構圖:推近=終點最近景(特寫);拉遠=終點全景;降鏡=終點低處主體(如降到手=手部特寫,臉不必入鏡);升鏡=終點高處;跟拍=行進中側後方視角;俯視/仰視=對應角度。嚴禁把起點與終點折衷成旁觀者中景。
+【定格瞬間・取高潮】有前後狀態變化的動作(按下開關→燈爆亮、擦拭→變透亮),moment 一律取「結果已發生」的那一刻:白光已爆發、燈罩已透亮;前置動作用姿勢暗示(手仍停在開關上)。嚴禁拍變化前的準備動作。
+轉譯鐵律:不得添加腳本沒有的元素;不得省略腳本明寫的元素;同場景的鏡必須用同一張場景卡;夜戲/車內戲的 light 必須明寫「夜間/車內微光」,防止被畫成白天。
+只輸出 JSON:{"character":"","sets":[{"id":"A","desc":""}],"frames":[{"id":1,"set":"A","size":"","cam":"","moment":"","light":"","spec":"","must":[],"ban":[]}]}`;
   const r=await window.IRIS_SUPABASE.invoke("gemini",{body:{task:"storyboard_spec",input:{prompt:prompt.slice(0,11000)},allowLocalFallback:false}});
   if(!r?.result?.frames?.length) throw new Error("分鏡轉譯器未回傳規格");
   return r.result;
@@ -5220,8 +5261,8 @@ async function generateStoryboardFrames(onlyId){
     : `【攝影風格】寫實手持 UGC 質感,自然光線,不要棚拍廣告感。`;
   const consistency=`${photoLang}
 【反塑膠感鐵則】必須像真實攝影師拍出的一格:光線要有明確方向與來源;皮膚、金屬、布料保留真實紋理與微小瑕疵;背景要有真實生活痕跡(使用過的工具、輕微磨損)。禁止:均勻無影的打光、過度平滑的磨皮質感、完美對稱的置中構圖、塑膠感高光。
-【一致性鐵律】整個分鏡系列屬於同一支影片:同一位主角、同一件服裝、同一個場地、同一種光線色溫與畫質。附上的參考圖是已定稿的分鏡與場地——人物長相、髮型、衣著、空間陳設必須與參考圖完全一致,只允許改變動作與構圖。
-【光線基準】整片的曝光、色溫、對比以參考圖為基準:除非本鏡描述明確要求變亮或變暗,否則環境亮度與色調必須與參考圖一致,不可自行加溫、提亮或改變路燈顏色。描述要求的亮度變化(如車燈變亮)只改該光源,環境基準不動。
+【一致性鐵律】整個分鏡系列屬於同一支影片:同一位主角、同一件服裝、同一種色溫與畫質。附上的參考圖【只管】人物長相、髮型、衣著與場地陳設——構圖、景別、視角、機位一律以本鏡文字規格為準,嚴禁沿用參考圖的視角與景別。
+【光線基準】色溫與畫質基調以參考圖為基準;但本鏡若明寫光線規格(夜間、車內微光、白光爆發),以文字規格為準——嚴禁把夜戲畫成白天。描述要求的亮度變化只改該光源,環境基準不動。
 【禁令】畫面中不得出現任何文字、字母、數字、Logo、招牌字;不得出現本鏡描述以外的任何人物。9:16 直式。
 【整片氛圍】${state.project?.anchor||""}`;
   const brandRefs=[];
@@ -5238,17 +5279,20 @@ async function generateStoryboardFrames(onlyId){
   try{
   for(const shot of targets){
     genStage(st,`分鏡示意圖 ${done+failed.length+1}/${targets.length}(鏡 ${shot.id}):生成中(前後鏡互鎖一致性)…`,14);
+    const idx=shots.indexOf(shot);
+    const fr=specs?.frames?.find(f=>Number(f.id)===Number(shot.id));
+    const prevFr=idx>0?specs?.frames?.find(f=>Number(f.id)===Number(shots[idx-1].id)):null;
+    const sameSet=!fr||!prevFr||fr.set===prevFr.set;
     const refs=[];
     const anchorF=state.frames[shots[0].id];
-    const idx=shots.indexOf(shot);
     const prevF=idx>0?state.frames[shots[idx-1].id]:null;
     if(anchorF&&shot.id!==shots[0].id)refs.push(await shrinkToPngB64(anchorF,480));
-    if(prevF&&prevF!==anchorF)refs.push(await shrinkToPngB64(prevF,480));
+    if(prevF&&prevF!==anchorF&&sameSet)refs.push(await shrinkToPngB64(prevF,480));
     for(const b of brandRefs){ if(refs.length<3)refs.push(b); }
-    const fr=specs?.frames?.find(f=>Number(f.id)===Number(shot.id));
-    const prompt=fr?`【角色卡・全片逐字固定】${specs.character||""}
+    const prompt=fr?`【鏡位規格・第一優先・逐字執行】景別:${fr.size||"依規格"}|機位:${fr.cam||"依規格"}|定格瞬間:${fr.moment||"動作的最終狀態"}|光線:${fr.light||"依場景卡"}。這四項高於一切參考圖——景別與視角錯了,整張圖就是廢圖。
+【角色卡・全片逐字固定】${specs.character||""}
 【場景卡(${fr.set})・固定陳設】${setDesc(fr.set)}
-【本鏡畫面規格・最高優先】${fr.spec}
+【本鏡畫面規格】${fr.spec}
 【必備元素・缺一即為失敗作品】${(fr.must||[]).join("、")||"依規格"}
 ${fr.ban?.length?`【明確禁止出現】${fr.ban.join("、")}`:""}
 【同機位延續】規格若說「同一機位/延續上一鏡」,構圖、亮度、光源與前一張參考圖幾乎完全相同,只改人物動作表情。
@@ -5271,6 +5315,17 @@ ${consistency}
       }
     }
     if(!url)continue;
+    if(fr){
+      genStage(st,`鏡 ${shot.id}:視覺驗收中(比對景別、必備元素、光線)…`,6);
+      const qc=await frameQualityCheck(fr,url);
+      if(qc&&qc.ok===false&&(qc.problems||[]).length){
+        genStage(st,`鏡 ${shot.id} 驗收未過(${qc.problems[0]}),自動修正重生…`,14);
+        try{
+          const url2=await storyboardFrame(`${prompt}\n【上一張的錯誤・本張必須修正】${qc.problems.slice(0,4).join(";")}`,refs);
+          if(url2)url=url2;
+        }catch(e){} /* 重生失敗就交第一張,不中斷 */
+      }
+    }
     state.frames[shot.id]=url; try{ delete frameImgCache[shot.id]; }catch(e){}
     const cellEl=document.querySelector(`[data-scene-row="${shot.id}"] .script-visual`);
     if(cellEl){ let im=cellEl.querySelector(".sb-thumb"); if(!im){ im=document.createElement("img"); im.className="sb-thumb"; im.alt=`鏡 ${shot.id} 示意圖`; cellEl.appendChild(im);} im.src=url; const one=cellEl.querySelector("[data-sb-one]"); if(one)one.textContent="重生示意圖"; }
