@@ -4980,6 +4980,22 @@ const CREATIVE_SCENES=[
   "清晨剛拉開鐵門的店內","工作檯與工具牆的特寫世界","雨天的騎樓與濕亮路面","地下停車場",
   "交車給客人的那一刻","午後自然光灑進的店內","郊區試車的空曠路段","收店前的最後一個工序"
 ];
+const HOOK_FORMULAS=[
+  {name:"斷言挑釁式",how:"第一句直接下一個讓人不服氣或心虛的斷言",ex:"你的車燈九成在漏光,只是你沒發現。"},
+  {name:"現場事故式",how:"開場就是事情發生到一半的現場(失敗/爆點/意外),第一句是當下反應",ex:"完了,整組冒煙了。"},
+  {name:"倒敘結果式",how:"先亮出結果,再回頭講怎麼發生",ex:"這顆燈,三小時前還是報廢品。"},
+  {name:"對話偷聽式",how:"像偷聽到現場對話,由一句真實對白開場",ex:"老闆,這顆…還有救嗎?"},
+  {name:"數字震撼式",how:"一個反直覺的具體數字打頭",ex:"10 顆霧化大燈,9 顆車主自己看不出來。"},
+  {name:"反向勸退式",how:"叫觀眾不要來/不要做,製造逆反好奇",ex:"別來換大燈,除非你受得了這三件事。"},
+  {name:"秘密揭露式",how:"業內人揭露圈內不想說的事",ex:"車燈行最不想讓你知道的一件事。"},
+  {name:"挑戰打賭式",how:"對觀眾下戰帖",ex:"敢不敢現在下車看一眼你的大燈?"},
+  {name:"職人告白式",how:"第一人稱、有情緒的真心話",ex:"做車燈十年,我最怕客人說這句話。"},
+  {name:"時間壓力式",how:"鎖定有時限的人群",ex:"驗車只剩 7 天的,先停下來 30 秒。"},
+  {name:"對比暴擊式",how:"開場即強烈對比,一句話點破差距",ex:"同一台車,左邊 5 米,右邊 50 米。"},
+  {name:"誤導反轉式",how:"前 2 秒讓人以為在講別的事,第 3 秒反轉回主題",ex:"(擦拭珠寶般的特寫)…這不是珠寶,是你的大燈。"},
+  {name:"情境刺痛式",how:"具體到有畫面的真實情境,講到觀眾自己的痛",ex:"晚上 11 點的西濱,你的燈只照得到 5 米。"},
+  {name:"反問式",how:"以問題開場(此式已被過度使用,僅在被指派時可用)",ex:"你的車燈,多久沒亮過了?"}
+];
 const VISUAL_STYLES=[
   {key:"neon",name:"霓虹夜景",desc:"濕潤路面反光、青紫與橘黃霓虹互補色、深邃陰影",
    photo:"35mm f/1.8 淺景深實拍感,霓虹溢光與濕地反射,輕微鏡頭光暈,高 ISO 自然噪點,暗部保留細節"},
@@ -5018,10 +5034,13 @@ function creativeSeedBlock(seed){
   const play=seed?.cat?CREATIVE_PLAYBOOK.find(p=>p.cat===seed.cat):CREATIVE_PLAYBOOK[Math.floor(Math.random()*CREATIVE_PLAYBOOK.length)];
   const angle=seed?.angle||play.angles[Math.floor(Math.random()*play.angles.length)];
   const style=seed?.style||VISUAL_STYLES[Math.floor(Math.random()*VISUAL_STYLES.length)];
+  const hook=seed?.hook||HOOK_FORMULAS[Math.floor(Math.random()*(HOOK_FORMULAS.length-1))]; /* 隨機時排除反問式 */
   const scenes=[...CREATIVE_SCENES].sort(()=>Math.random()-.5).slice(0,2);
   const seasonal=seasonalHints();
   const history=creativeHistory();
   return `【本版創意指派】手法類別:「${play.cat}」;指定玩法:「${angle}」——整支片必須以這個玩法為骨,執行到位而非點到為止。
+【本版 Hook 句式・強制執行】「${hook.name}」:${hook.how}。參考範例(語感,禁止照抄):「${hook.ex}」。第 1 鏡的口播與畫面必須用這個句式開場;除非被指派,否則【嚴禁】用反問句開場——反問式已被用爛了。
+【無聊禁令】①台詞禁止說明書腔與客套話,要像真人有情緒地講話;②全片至少要有一個「具體到有畫面感」的細節(5 米、87%、三小時前、晚上 11 點的西濱——具體才刺痛);③第 2 鏡結束前必須留下一個讓人非往下看不可的鉤(未解的懸念/未完成的動作)。做不到這三條的腳本,觀眾滑走不會超過 2 秒。
 【本版視覺風格】「${style.name}」(${style.desc})。anchor 欄位必須以這種風格的攝影語言撰寫:${style.photo}。全片每一鏡的光線與色調都服從此風格。
 【魔法時刻・必備】全片必須設計一個 magic moment 鏡頭——一次瞬間的視覺爽點(例:燈瞬間全亮、髒污一秒變潔淨、老舊瞬間翻新),這一鏡是留存與轉發的核心;在該鏡 action_prompt 句首標【魔法時刻】。
 【動態元素・每鏡必備】每鏡 action_prompt 至少寫入一個「會動的環境或材質元素」(蒸氣、光斑流動、雨絲、布料飄動、火花、灰塵微粒、水珠滑落),畫面才不會死板。
@@ -5046,10 +5065,11 @@ ${creativeSeedBlock(seed)}
 【結構落實】上面拆解 JSON 中每個 segment 的 role 與 purpose,是對應鏡頭的「敘事任務」——逐鏡完成該任務,但畫面、情境、台詞必須全新杜撰,禁止把 purpose 的文字直接翻譯成台詞或畫面描述。
 
 【商業硬規則——違反任何一條即為失敗腳本】
-R1 前 1.5 秒三重 hook:第 1 鏡口播第一句 ≤15 字且必須「指名受眾」或「給出結果/數字」;第 1 鏡畫面必須有視覺衝擊;主標字卡同步命中同一訊息。
+R1 前 1.5 秒三重 hook:第 1 鏡口播第一句 ≤15 字,並以【本版 Hook 句式】執行(句式的張力來源可以是斷言、事故、數字、對白、懸念——不限於指名受眾);第 1 鏡畫面必須有視覺衝擊且與口播同拍;主標字卡同步命中同一訊息。
 R2 一片一訊息:全片只推「一個」服務或痛點,禁止塞第二個賣點。
 R2b【主體類別鎖定】影片中的載具/產品/服務對象必須嚴格符合品牌產業分類——「汽車照明」就是汽車,不可擅自改成機車、腳踏車或其他類別;「美髮」就是頭髮,不可變成美甲。對產業分類有歧義時,以完整分類路徑為準。
 R11【鏡頭語言規格・每鏡都要】action_prompt 必須是「一個可讀的鏡頭」,依序寫:運鏡標記+主體+單一可見動作+場景與空間關係+光線,結尾加「一鏡到底,不切換場景」。運鏡標記從清單擇一放句首:【推近】【拉遠】【左搖】【右搖】【左移】【右移】【升鏡】【降鏡】【俯視】【仰視】【跟拍】【手持微晃】【固定鏡頭】。每鏡只允許一個主要動作與一個主要運鏡;禁止一鏡內出現多個地點、時間跳躍或連續兩個以上動作;需要強調氛圍時描述光線與景深,不要堆疊動作。
+【運鏡分佈・強制】全片必須使用至少 4 種不同的運鏡標記;【固定鏡頭】全片至多 2 鏡,且第 1 鏡禁用固定鏡頭——開場就要動起來。滿屏固定鏡頭=偷懶=廢稿。
 R12【品牌露出結構・違反即廢稿】全片至少 2 鏡必須明確發生在品牌場域(店內/工作檯/技師或老闆與顧客互動),action_prompt 要寫出場域字眼(店內、工作檯、技師…);最後一鏡(CTA)必須發生在品牌場域,讓觀眾知道要去哪裡。品牌不露出的廣告不是廣告。
 【交稿前自檢・答不出就自行重寫】輸出前逐題自問:①這支片的單一主張是什麼?②品牌場域在第幾鏡露出?③魔法時刻與主張的直接因果是什麼?任何一題答不清楚,整支重寫後再輸出。自檢過程不要輸出,只輸出最終 JSON。
 R3 UGC 原生感:口播像老闆本人對客人講話,口語、短句;禁廣告腔、禁「歡迎蒞臨」「專業團隊」「品質保證」類官腔詞。
@@ -5106,8 +5126,6 @@ function validateCommercial(p, brand){
   const s1 = p.shots[0];
   const firstSentence = String(s1.voiceover||"").split(/[,,。!!??]/)[0];
   if(firstSentence.length > 16) bad.push(`R1 第1鏡口播首句 ${firstSentence.length} 字(>15):「${firstSentence}」`);
-  if(!/[0-9零一二三四五六七八九十百千萬%]/.test(s1.voiceover||"") && !/[你妳您]|的人|車主|老闆|媽媽|注意/.test(s1.voiceover||""))
-    bad.push("R1 第1鏡口播未指名受眾也沒有數字/結果");
   p.shots.forEach((s,i)=>{
     const vo = String(s.voiceover||"");
     const cap = Math.round((s.dur||4) * 5.5); // 口播上限:每秒約 5 字,留呼吸空間
@@ -5317,7 +5335,8 @@ async function generateBrandScript(){
   try{
     const cats=[...CREATIVE_PLAYBOOK].sort(()=>Math.random()-.5).slice(0,3);
     const styles=[...VISUAL_STYLES].sort(()=>Math.random()-.5).slice(0,3);
-    const seeds=cats.map((c,i)=>({cat:c.cat,angle:c.angles[Math.floor(Math.random()*c.angles.length)],style:styles[i]}));
+    const hooks=[...HOOK_FORMULAS.slice(0,-1)].sort(()=>Math.random()-.5).slice(0,3); /* 三版三種 hook 句式,反問式不入抽 */
+    const seeds=cats.map((c,i)=>({cat:c.cat,angle:c.angles[Math.floor(Math.random()*c.angles.length)],style:styles[i],hook:hooks[i]}));
     const results = await Promise.allSettled(seeds.map(s=>generateOneScript(shotCount,targetSec,s)));
     const versions = results.filter(r=>r.status==="fulfilled").map(r=>r.value);
     if(!versions.length){ throw (results[0].reason||new Error("三個版本都生成失敗,請再試一次")); }
