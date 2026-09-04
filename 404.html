@@ -339,6 +339,7 @@ body.trend-screen:not(.structure-demo) #an-result-card{display:none!important}
 .sb-thumb{width:74px;aspect-ratio:9/16;object-fit:cover;border-radius:6px;border:1px solid #39332d;display:block;margin-top:7px;cursor:zoom-in}
 .sb-thumb:hover{transform:scale(2.6);transform-origin:left top;z-index:30;position:relative;box-shadow:0 10px 30px rgba(0,0,0,.5)}
 .sb-thumb.sb-failed{outline:2px solid #e05252;outline-offset:1px}
+.sb-thumb.sb-sketch{border:1px dashed #8a7a5c;opacity:.85;filter:saturate(.8)}
 .sb-fail-tag{display:inline-block;margin-top:4px;font-size:11px;color:#e05252}
 .sb-refs{display:flex;gap:12px;flex-wrap:wrap;margin:8px 0 12px;padding:10px;border:1px solid #2c2822;border-radius:8px;background:rgba(255,255,255,.02)}
 .sb-ref{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;color:#a89f92}
@@ -1901,7 +1902,8 @@ body.home-screen header h1.brand-mark b{font-size:18px}
           </section>
           <section class="home-assets studio-surface">
             <div class="surface-title"><div><h3>商家實拍素材</h3><small>圖片或實拍影片</small></div><span>已上傳 <b id="home-asset-count">0</b> / 6</span></div>
-            <div class="asset-layout"><label class="drop-zone" for="bk-assets"><span class="upload-icon"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-upload"></use></svg></span><b>上傳圖片／影片</b><small>拖曳檔案或點擊上傳</small><em>支援 JPG、PNG、MP4（單檔 ≤ 200MB）</em></label><div class="shot-guide"><b>建議內容</b><ul><li>門店環境／外觀</li><li>服務或產品特寫</li><li>團隊工作或服務過程</li><li>顧客體驗畫面</li></ul></div><div class="asset-example"><span><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-image"></use></svg></span><b>範例預覽</b><small>上傳素材後將顯示預覽</small></div></div><div class="row clip-upload-row"><label class="btn small ghost clip-upload-btn" id="bk-clips-trigger" for="bk-clips" role="button" tabindex="0"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-film"></use></svg>上傳實拍影片(混剪用)</label><span class="hint" style="margin:0">最多 4 支・單檔 ≤60MB・總量 ≤180MB</span></div>
+            <div class="asset-layout"><label class="drop-zone" for="bk-assets"><span class="upload-icon"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-upload"></use></svg></span><b>上傳圖片／影片</b><small>拖曳檔案或點擊上傳</small><em>支援 JPG、PNG、MP4（單檔 ≤ 200MB）</em></label><div class="shot-guide"><b>建議內容</b><ul><li>門店環境／外觀</li><li>服務或產品特寫</li><li>團隊工作或服務過程</li><li>顧客體驗畫面</li></ul></div><div class="asset-example"><span><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-image"></use></svg></span><b>範例預覽</b><small>上傳素材後將顯示預覽</small></div></div><div class="row clip-upload-row"><label class="btn small ghost clip-upload-btn" id="bk-clips-trigger" for="bk-clips" role="button" tabindex="0"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-film"></use></svg>上傳實拍影片(混剪用)</label><span class="hint" style="margin:0">最多 4 支・單檔 ≤60MB・總量 ≤180MB</span></div><div class="row clip-upload-row"><label class="btn small ghost clip-upload-btn" id="bk-people-trigger" for="bk-people" role="button" tabindex="0"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-image"></use></svg>上傳老闆／技師人物照(鎖定影片主角)</label><span class="hint" style="margin:0">最多 2 人・正面清楚・分鏡與影片會以真人為準</span></div>
+            <input type="file" id="bk-people" class="visually-hidden" accept="image/jpeg,image/png,image/webp" multiple><div id="bk-people-status" class="status-line">未上傳人物照(將由 AI 生成一位虛構主角;上傳真人可讓影片主角就是老闆本人)</div><div id="bk-people-thumbs"></div>
             <input type="file" id="bk-assets" class="visually-hidden" accept="image/jpeg,image/png,image/webp" multiple><input type="file" id="bk-clips" class="visually-hidden" accept="video/mp4,video/quicktime" multiple><div id="bk-assets-status" class="status-line">尚未上傳</div><div id="bk-clips-status" class="status-line" role="status" aria-live="polite">尚未加入實拍影片</div><div id="bk-assets-thumbs"></div><div id="bk-clips-list"></div><p class="privacy-line"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-lock"></use></svg>素材僅用於本次專案，絕不對外公開。 <button type="button" class="text-action" data-reorganize-assets><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-refresh"></use></svg>重新整理</button></p>
           </section>
           <section class="home-voice studio-surface">
@@ -4223,6 +4225,7 @@ const state = {
   voClips: {},              // shotId -> {url, el, dur}
   music: {url:null, el:null},
   brandAssets: [],          // merchant photo dataURLs (H3 reference_image)
+  brandPeople: [],          // 老闆/技師人物照 {name,url}(定妝照與影片主角以真人為準)
   userClips: [],
   materialOrder: [],
   sceneAssignments: {},
@@ -5204,7 +5207,7 @@ R4b 分段切點設計:本片會切成前後兩段生成,分界在鏡 ${Math.cei
 R5【CTA 位置=全片 75-80% 處】點擊高峰在片尾之前,不在最後一格:CTA 放在鏡 ${shotCount-1}(倒數第二鏡),必含一個 2-4 字私訊暗號(如:私訊「健檢」);鏡 1 到鏡 ${shotCount-2} 禁止出現「私訊」二字。最後一鏡(鏡 ${shotCount})不再推銷,只做收束與循環回扣(見 R7),可用一句短句重複暗號或完全不提。
 R5b【CTA 必須有誘因】只寫「私訊XX」等於沒有 CTA。鏡 ${shotCount-1} 的 voiceover(或其 caption.main)必須同時具備三要素:①低門檻動作(私訊暗號)②對方立刻可得的具體好處——免費診斷 / 免費估價 / 送懶人包 / 送檢查表 / 免費體驗,不可用「了解更多」「歡迎詢問」這種空話 ③稀缺或時限感(本週 / 前 10 位 / 這個月)。範例:「這週私訊『健檢』,免費幫你看三個最該修的地方。」
 R6 禁語:${b.banned.join("、")||"無"};醫療/療效保證詞一律禁止。
-R7【循環收尾・YouTube 每次重播算一次觀看】最後一鏡必須讓片尾自然接回片頭:①台詞 callback——重複或回應第 1 鏡的關鍵詞/那句話(結尾讓開頭換一層意思最好)②尾幀構圖回扣首幀(同機位、同主體位置,讓循環時看不出接縫)③結尾保持動態,禁止定格、黑場或「謝謝觀看」式硬停;④最後一鏡口播 ≤10 字,不塞任何推銷。做到的話觀眾會不自覺重看,留存率能超過 100%。
+R7【循環收尾・YouTube 每次重播算一次觀看】最後一鏡必須讓片尾自然接回片頭:①台詞 callback——重複或回應第 1 鏡的關鍵詞/那句話(結尾讓開頭換一層意思最好),但 callback 是回應「開場 hook」,絕不可把 CTA/私訊/暗號抄進第 1 鏡或最後一鏡;②尾幀構圖回扣首幀(同機位、同主體位置,讓循環時看不出接縫)③結尾保持動態,禁止定格、黑場或「謝謝觀看」式硬停;④最後一鏡口播 ≤10 字,不塞任何推銷。做到的話觀眾會不自覺重看,留存率能超過 100%。
 R8【最高優先・違反即廢稿】action_prompt 絕對禁止要求畫面產生任何文字、字母、Logo、店名、菜單內容、海報字、招牌字、價目、電話。影片模型無法正確生成中文,一寫必成亂碼。
  · 需要「招牌/海報/菜單」入鏡時,一律描述成【空白未印刷的素面板材】:例:「一面全新的空白霧面招牌板,純色無任何文字或圖案」「素面空白菜單本」。文字之後由系統字幕層疊上。
  · 需要「品牌 Logo 出現」時,描述成【空白展示位】:例:「牆面留出一塊乾淨的空白區域」。
@@ -5220,12 +5223,15 @@ R13b【開環必閉環】hook 開出的懸念或承諾,必須在結尾前「用�
 R13c【中段視覺重置】鏡 ${Math.ceil(shotCount/2)+1}(全片一半處)必須是一次強視覺轉換:換場景、景別大跳或節奏突變,把快滑走的注意力拉回來——這與 R8b 的分段切點重合,一次完成。
 R13d【痛點具象化】禁用「困擾」「煩惱」「問題」「危險」等抽象痛點詞;痛點必須寫成一個具體的「卡住瞬間」——不是「夜間視線不好」,而是「對向來車一過,你眼前全黑兩秒」。具體才刺痛,抽象沒人痛。
 R13e【反轉品質門檻】若本片使用反轉或搞笑橋段:鋪墊必須可信到觀眾真的會信,反轉才有力。鋪墊太假,反轉就廉價;鋪墊太明顯,驚喜就沒了。
+R14【名詞鐵律・違反即廢稿】action_prompt 裡凡是品牌的商品、服務對象、工具、場地,一律寫「完整具體名詞」,禁止泛稱——以汽車照明為例:「汽車頭燈總成」不可寫成「燈具/燈」、「車用 LED 大燈燈泡」不可寫成「燈泡」、「車內大燈開關」不可寫成「開關」、「魚眼透鏡」不可寫成「鏡片」;其他產業同理(「客人的頭髮」不是「頭」、「義式咖啡機」不是「機器」)。分鏡與影片模型只看字面,泛稱一定畫錯。
+R14b【角色點名】腳本最多兩個角色(角色 A=老闆/技師/店家方,角色 B=顧客/車主,若有),在 cast 欄位寫出各自具體外觀;每鏡 action_prompt 開頭的主體必須用角色名稱點名(例:「老闆」「車主」),不可只寫「他」「主角」。全片人物只能是 cast 裡的人。${(state.brandPeople||[]).length?`客戶已上傳 ${(state.brandPeople||[]).length} 位真人照片,角色 A${(state.brandPeople||[]).length>1?"、B":""} 的外觀將以真人為準,cast.look 只需寫角色身分與服裝。`:""}
 
 輸出繁體中文 JSON(只輸出 JSON):
 {
  "anchor":"全片連貫性鎖:【主角外觀(年齡/性別/衣著,具體)】【場景(具體台灣場景)】【攝影風格】【色調】,約80字,所有鏡頭共用",
  "voice":{"gender":"female或male","style":"energetic/warm/calm","reason":"一句話"},
  "title":"可搜尋的標題(≤20 字,含觀眾會搜的痛點關鍵字;Shorts 靠搜尋活好幾個月)",
+ "cast":[{"id":"A","role":"老闆/技師(店家方)","look":"具體外觀:台灣/東亞面孔、年齡、臉型特徵、髮型、服裝逐件"},{"id":"B","role":"車主/顧客(若有,沒有就省略)","look":"同上"}],
  "sound_design":"本片聲音策略:環境音/工具聲/關鍵瞬間音效點/口播節奏,一句話",
  "hook_type":"填【本版 Hook 句式】的名稱",
  "formula":"填本版配方名稱(如:任務挑戰型)",
@@ -5307,7 +5313,7 @@ async function microFixScript(p,violations){
   const list=targets.length?p.shots.filter(s=>targets.includes(s.id)):p.shots;
   if(!list.length)return p;
   const camIssue=violations.some(v=>/R11|運鏡|固定鏡頭/.test(String(v)));
-  const prompt=`你是文案醫生。只修正下列鏡頭,使其完全符合規則;語意、品牌口吻與節奏保持不變,未列規則的欄位一律不動。\n必須符合的規則:\n- ${violations.map(v=>String(v)).join("\n- ")}\n【極重要】「字」指中文字元數,輸出前逐字數過;寧可短、絕不可超過上限。${camIssue?`\n【運鏡修正】若規則涉及運鏡(R11):改該鏡 action_prompt 句首的運鏡標記(從【推近】【拉遠】【左搖】【右搖】【左移】【右移】【升鏡】【降鏡】【俯視】【仰視】【跟拍】【手持微晃】中擇一合適者),只換標記與必要的鏡頭描述銜接,動作內容與場景不變。`:""}\n待修鏡頭:\n${list.map(s=>`鏡 ${s.id}(口播上限 ${s.dur*5} 字${s.id===1?",且首句另限 15 字":""}):「${s.voiceover}」${camIssue?`|畫面:「${s.action_prompt||""}」`:""}`).join("\n")}\n只輸出 JSON:{"shots":[{"id":鏡號,"voiceover":"改寫後的句子(未改則原樣)"${camIssue?`,"action_prompt":"改寫後的畫面(未改則省略此欄)"`:""}}]}`;
+  const prompt=`你是文案醫生。只修正下列鏡頭,使其完全符合規則;語意、品牌口吻與節奏保持不變,未列規則的欄位一律不動。\n必須符合的規則:\n- ${violations.map(v=>String(v)).join("\n- ")}\n【極重要】「字」指中文字元數,輸出前逐字數過;寧可短、絕不可超過上限。若規則指出某鏡「提前出現私訊」,直接刪除該鏡的私訊/暗號字樣並補成自然的句子(CTA 只屬於指定的那一鏡)。${camIssue?`\n【運鏡修正】若規則涉及運鏡(R11):改該鏡 action_prompt 句首的運鏡標記(從【推近】【拉遠】【左搖】【右搖】【左移】【右移】【升鏡】【降鏡】【俯視】【仰視】【跟拍】【手持微晃】中擇一合適者),只換標記與必要的鏡頭描述銜接,動作內容與場景不變。`:""}\n待修鏡頭:\n${list.map(s=>`鏡 ${s.id}(口播上限 ${s.dur*5} 字${s.id===1?",且首句另限 15 字":""}):「${s.voiceover}」${camIssue?`|畫面:「${s.action_prompt||""}」`:""}`).join("\n")}\n只輸出 JSON:{"shots":[{"id":鏡號,"voiceover":"改寫後的句子(未改則原樣)"${camIssue?`,"action_prompt":"改寫後的畫面(未改則省略此欄)"`:""}}]}`;
   const text=await irisGenerate("fix",[{text:prompt}],true);
   const fixed=parseJsonLoose(text);
   for(const f of (fixed.shots||[])){ const s=p.shots.find(x=>x.id===Number(f.id)); if(!s)continue; if(f.voiceover)s.voiceover=String(f.voiceover); if(f.action_prompt)s.action_prompt=String(f.action_prompt); }
@@ -5347,56 +5353,72 @@ async function frameQualityCheck(fr,url,charSheetUrl){
     const img=await shrinkToJpegB64(url,320);
     if(!img)return null;
     const reference=charSheetUrl?await shrinkToJpegB64(charSheetUrl,320):null;
-    const spec=`景別:${fr.size||"未指定"}|機位:${fr.cam||"未指定"}|定格瞬間:${fr.moment||"未指定"}|光線:${fr.light||"未指定"}|畫面規格:${fr.spec||""}|必備元素:${(fr.must||[]).join("、")||"無"}|禁止出現:${(fr.ban||[]).join("、")||"無"}`;
+    const spec=`Render brief: ${fr.render||""}|景別:${fr.size||"未指定"}|機位:${fr.cam||"未指定"}|定格瞬間:${fr.moment||"未指定"}|光線:${fr.light||"未指定"}|畫面規格:${fr.spec||""}|核心必備:${(fr.must||[]).join("、")||"無"}|禁止出現:${(fr.ban||[]).join("、")||"無"}`;
     const input={spec:spec.slice(0,2800),image:img}; if(reference)input.reference=reference;
     const r=await window.IRIS_SUPABASE.invoke("gemini",{body:{task:"frame_check",input,allowLocalFallback:false}});
     if(r?.result&&typeof r.result.ok==="boolean")return r.result;
   }catch(e){}
   return null; /* 驗收器本身故障不擋交付 */
 }
-async function storyboardFrame(prompt,refs){
-  const r=await window.IRIS_SUPABASE.invoke("storyboard",{body:{prompt,references:(refs||[]).filter(Boolean).slice(0,3)}});
+async function storyboardFrame(prompt,refs,aspect){
+  const r=await window.IRIS_SUPABASE.invoke("storyboard",{body:{prompt,references:(refs||[]).filter(Boolean).slice(0,3),aspect:aspect||"9:16"}});
   if(!r||!r.image) throw new Error("未取得示意圖");
   return `data:${r.mime||"image/png"};base64,${r.image}`;
 }
 async function storyboardSpecs(p){
   const shots=p.shots||[];
   const brand=state.brand||{};
-  const prompt=`你是專業分鏡轉譯師:把影片劇本轉成「靜態圖像規格書」,供圖像模型逐鏡作畫。
+  const people=(state.brandPeople||[]).length;
+  const castLine=(p.cast||[]).length?`腳本宣告的角色:${(p.cast||[]).map(c=>`${c.id}=${c.role}(${c.look||""})`).join(";")}`:"腳本未宣告角色:請從劇本辨識(角色 A=老闆/技師/店家方;角色 B=顧客/車主,若有)";
+  const prompt=`你是專業分鏡轉譯師:把影片劇本轉成「靜態圖像規格書」,供圖像模型逐鏡作畫。圖像模型只看字面、偏好英文、一次只畫得好「一個主體做一件事」——你的工作是把劇本翻成它畫得出來的規格,不是改寫劇本。
 品牌:${brand.name||""}(${brand.industry||""});全片氛圍:${p.anchor||""}
+${castLine}${people?`。客戶已上傳 ${people} 位真人照片:角色 A${people>1?"、B":""} 的外觀以真人照片為準,desc 只寫身分與服裝,不要描述臉。`:""}
 完整腳本:
 ${shots.map(s=>`鏡 ${s.id}(${s.dur}s)|旁白:${s.voiceover||"(無)"}|畫面:${s.action_prompt||""}`).join("\n")}
 任務:
-1. character:主角的定妝卡——必須鎖死可辨識的身分:人種與面孔(台灣/東亞面孔,除非腳本明寫)、年齡、臉型與明顯特徵(眉眼、鬍子、痣)、髮型與髮色、體型、服裝逐件(上衣顏色款式、褲子、鞋、配件如手錶/帽子)。這張卡會先生成一張定妝照,之後每一鏡都以它為身分參考;寫得不具體=每鏡換人。若腳本有第二個人(顧客),寫在 character 末尾以「配角:」開頭,同樣具體。
-2. sets:全片出現的場景卡(最多 4 個)。每個場景給 id(A/B/C)與 desc(固定陳設,品牌場域要寫出具體元素:工作檯、工具牆、升降機、招牌位留白)與 plate(這個場景的「空景」描述:無人物、相機位置、主要陳設與光線,將先生成一張空景圖供全片參考)。
-3. frames:每鏡一筆 {id, set:所用場景卡id, size:景別(極特寫/特寫/中景/全景 擇一), cam:機位(相機在哪個位置、朝哪個方向、什麼高度角度——例:「相機位於儀表板前方,朝駕駛面部,微仰角」), moment:定格瞬間(這鏡的動作時序中,圖要拍哪一刻), light:光線(方向、來源、色溫), spec:空間性畫面規格(主體在畫面中的位置與姿態), must:[畫面必備元素 3-6 項——只准寫「內容」:人物、物件、動作狀態、場景物件(例:棉花糖在光束中、車頭燈總成、工作檯);嚴禁寫色調、風格、氛圍、情緒詞], ban:[明確禁止出現的元素]}。
-【招牌運鏡→構圖對照】腳本 action_prompt 若含「招牌運鏡:X」,本鏡構圖依下表執行(這是示意圖有新意的來源,不可忽略):${CAMERA_MOVES.map(m=>`${m.name}=${m.still}`).join(";")}。
-【運鏡→定格對照表・必須遵守】運鏡是時間中的路徑,靜態圖只能拍一瞬——一律取「運鏡終點」的構圖:推近=終點最近景(特寫);拉遠=終點全景;降鏡=終點低處主體(如降到手=手部特寫,臉不必入鏡);升鏡=終點高處;跟拍=行進中側後方視角;俯視/仰視=對應角度。嚴禁把起點與終點折衷成旁觀者中景。
-【定格瞬間・取高潮】有前後狀態變化的動作(按下開關→燈爆亮、擦拭→變透亮),moment 一律取「結果已發生」的那一刻:白光已爆發、燈罩已透亮;前置動作用姿勢暗示(手仍停在開關上)。嚴禁拍變化前的準備動作。
-轉譯鐵律:不得添加腳本沒有的元素;不得省略腳本明寫的元素;同場景的鏡必須用同一張場景卡;夜戲/車內戲的 light 必須明寫「夜間/車內微光」,防止被畫成白天。
-只輸出 JSON:{"character":"","sets":[{"id":"A","desc":"","plate":""}],"frames":[{"id":1,"set":"A","size":"","cam":"","moment":"","light":"","spec":"","must":[],"ban":[]}]}`;
+1. characters:最多 2 個角色 {id:"A"/"B", role:身分, desc:中文定妝卡——人種與面孔(台灣/東亞面孔)、年齡、臉型特徵、髮型髮色、體型、服裝逐件, desc_en:同一內容的英文版(給圖像模型)}。全片人物只能是這些人。
+2. sets:場景卡(最多 4 個){id, desc:中文固定陳設, plate:中文空景描述(無人物、相機位置、主陳設、光線), plate_en:英文空景描述}。
+3. frames:每鏡一筆 {id, set, cast:[本鏡在場的角色 id], size:景別(極特寫/特寫/中景/全景), cam:機位, moment:定格瞬間, light:光線, spec:中文畫面規格(主體位置與姿態), render:英文渲染句, must:[核心必備 3-4 項], ban:[]}。
+【render 英文渲染句・最重要的欄位】一句 40-70 個英文單字,圖像模型直接照這句畫:開頭是景別+誰(用 "the shop owner"/"the customer" 這種角色稱呼,不用名字)+在哪+做什麼+關鍵物件的完整名詞(car headlight assembly / LED headlight bulb / headlight switch inside the car,絕不用 lamp/light 泛稱)+定格的那一刻+光線。名詞要具體到不可能誤解。
+【可畫性簡化】每鏡只能有一個主體、一個動作、一個關鍵物件、一個清楚景別。劇本若在一鏡內有多個動作或狀態變化,選「最能代表這鏡、且圖畫得出來」的那一格;有前後狀態的動作一律取結果已發生的那一刻(白光已射出、燈罩已透亮)。
+【內容錨點】spec 與 render 必須忠實於劇本原句:不得添加劇本沒有的元素,不得省略劇本明寫的關鍵物件;只做名詞正規化(燈具→汽車頭燈總成)與可畫性簡化。
+【must 核心 3-4 項】只准寫:誰、什麼產品/物件、什麼動作狀態、什麼場地——例:老闆、汽車頭燈總成、手按開關、店內工作檯。嚴禁寫汗珠、樹葉、蒸氣、灰塵、光暈這類氛圍細節,嚴禁寫色調風格。品牌主體物件(如汽車頭燈總成)只要劇本該鏡有,必須列入 must。
+【招牌運鏡→構圖對照】action_prompt 若含「招牌運鏡:X」,構圖依下表:${CAMERA_MOVES.map(m=>`${m.name}=${m.still}`).join(";")}。
+【運鏡→定格】一律取運鏡終點的構圖:推近=特寫;拉遠=全景;降鏡=低處主體;升鏡=高處;跟拍=側後方;俯視/仰視=對應角度。
+轉譯鐵律:同場景的鏡用同一張場景卡;夜戲/車內戲的 light 與 render 必須明寫 night / dim interior,防止畫成白天。
+只輸出 JSON:{"characters":[{"id":"A","role":"","desc":"","desc_en":""}],"sets":[{"id":"A","desc":"","plate":"","plate_en":""}],"frames":[{"id":1,"set":"A","cast":["A"],"size":"","cam":"","moment":"","light":"","spec":"","render":"","must":[],"ban":[]}]}`;
   const r=await window.IRIS_SUPABASE.invoke("gemini",{body:{task:"storyboard_spec",input:{prompt:prompt.slice(0,11000)},allowLocalFallback:false}});
   if(!r?.result?.frames?.length) throw new Error("分鏡轉譯器未回傳規格");
   const specs=r.result;
-  const STYLE_WORD=/色調|色彩|風格|氛圍|質感|對比|飽和|冷色|暖色|Teal|Orange|電影感|顆粒|光暈/i;
+  if(!Array.isArray(specs.characters)||!specs.characters.length){ specs.characters=[{id:"A",role:"主角",desc:specs.character||"",desc_en:""}]; }
+  specs.characters=specs.characters.slice(0,2).map((c,i)=>({id:c.id||(i?"B":"A"),role:c.role||(i?"顧客":"老闆"),desc:c.desc||"",desc_en:c.desc_en||""}));
+  const STYLE_WORD=/色調|色彩|風格|氛圍|質感|對比|飽和|冷色|暖色|Teal|Orange|電影感|顆粒|光暈|汗珠|樹葉|蒸氣|灰塵|微粒|水珠|火星/i;
   for(const f of (specs.frames||[])){
-    f.must=(f.must||[]).filter(m=>!STYLE_WORD.test(String(m)));
-    f.ban=[...new Set([...(f.ban||[]),"科幻裝置","雷射光束機器","未來感機器","任何文字或字母","與角色定妝照不同的人"])];
+    f.must=(f.must||[]).filter(m=>!STYLE_WORD.test(String(m))).slice(0,4);
+    f.cast=Array.isArray(f.cast)&&f.cast.length?f.cast.slice(0,2):["A"];
+    f.ban=[...new Set([...(f.ban||[]),"科幻裝置","雷射光束機器","未來感機器","任何文字或字母","定妝照以外的人"])];
   }
   return specs;
 }
-async function ensureCharacterSheet(specs,force){
-  const p=state.project; if(!p)return null;
-  if(p._charSheet&&!force)return p._charSheet;
+async function ensureCharacterSheets(specs,force,onlyId){
+  const p=state.project; if(!p)return {};
+  p._charSheets=p._charSheets||{};
+  const people=state.brandPeople||[];
   const vstyle=p._style;
-  const prompt=`【角色定妝照・全片身分基準】請生成一張 9:16 的角色定妝照:畫面上半是正面臉部特寫(看鏡頭、自然表情、清楚看到五官與髮型),下半是同一人的全身站姿(清楚看到整套服裝與鞋)。
-【角色卡・逐字執行】${specs.character||""}
-【攝影】${vstyle?vstyle.photo:"手機主鏡頭直出感,自然光"};真實攝影質感,皮膚與布料保留真實紋理;素色中性背景,不要任何場景細節。
-【禁令】畫面不得出現文字、字母、Logo;只能有這一個人(若角色卡有配角,配角不入此照)。
-【輸出要求】直接輸出一張 9:16 圖片,不要任何文字說明。`;
-  const url=await storyboardFrame(prompt,[]);
-  p._charSheet=url; renderStoryboardRefs(specs);
-  return url;
+  const chars=(specs.characters||[]).slice(0,2);
+  for(let i=0;i<chars.length;i++){
+    const c=chars[i];
+    if(onlyId&&c.id!==onlyId)continue;
+    if(p._charSheets[c.id]&&!force)continue;
+    const real=people[i]?await shrinkToPngB64(people[i].url,640):null;
+    const prompt=real
+      ?`Character reference sheet, 9:16. Image 1 is a REAL person: the ${c.role}. Recreate this exact same person — identical face, skin tone, hairstyle, build and age — in a photographic reference sheet: top half a front-facing head-and-shoulders portrait looking at camera with a natural expression, bottom half the same person standing full body showing the full outfit. Outfit: ${c.desc_en||c.desc}. Plain neutral studio background, no props, no text, no logos, only this one person. Real photograph look, ${vstyle?vstyle.photo:"natural light, phone camera realism"}.`
+      :`Character reference sheet, 9:16, real photograph look. Top half: front-facing head-and-shoulders portrait looking at camera, natural expression, face and hairstyle clearly visible. Bottom half: the same person standing full body, full outfit and shoes visible. The person: ${c.desc_en||c.desc}. Plain neutral studio background, no props, no text, no logos, exactly one person. ${vstyle?vstyle.photo:"natural light, phone camera realism"}.`;
+    try{ p._charSheets[c.id]=await storyboardFrame(prompt,real?[real]:[]); }catch(e){}
+    renderStoryboardRefs(specs);
+  }
+  p._charSheet=p._charSheets[chars[0]?.id]||null; /* 舊欄位相容 */
+  return p._charSheets;
 }
 async function ensureSetPlates(specs,force,onlySetId){
   const p=state.project; if(!p)return {};
@@ -5407,35 +5429,76 @@ async function ensureSetPlates(specs,force,onlySetId){
   for(const s of (specs.sets||[]).slice(0,4)){
     if(onlySetId&&s.id!==onlySetId)continue;
     if(p._setPlates[s.id]&&!force)continue;
-    const prompt=`【場景空景・全片場地基準】請生成一張 9:16 的場景空景照:這是同一支影片全片共用的場地,畫面中【不得有任何人物】。
-【場景卡(${s.id})・逐字執行】${s.desc||""}
-【空景構圖】${s.plate||"相機在場景主要動線正前方,中景,清楚看到主要陳設與光線來源"}
-${brandRefs.length?"【品牌素材】附上的參考圖是品牌真實店面/商品照,陳設、色彩與招牌位置必須以它為準(招牌保持空白素面)。":""}
-【攝影】${vstyle?vstyle.photo:"手機主鏡頭直出感,自然光"};真實攝影質感,有生活痕跡(用過的工具、輕微磨損)。
-【禁令】不得出現文字、字母、Logo、任何人物或人形。
-【輸出要求】直接輸出一張 9:16 圖片,不要任何文字說明。`;
-    try{ p._setPlates[s.id]=await storyboardFrame(prompt,brandRefs.slice(0,3)); }catch(e){ /* 空景失敗不擋流程,該場景退回舊模式 */ }
+    const prompt=`Empty location plate for a video storyboard, 9:16, real photograph look, NO people and no human figures anywhere. ${s.plate_en||s.plate||s.desc}. ${brandRefs.length?"The attached reference photos are the real shop/products: match their layout, fixtures, colours and signage position (keep any signboard blank and plain).":""} Lived-in details (used tools, slight wear), ${vstyle?vstyle.photo:"natural light, phone camera realism"}. No text, no letters, no logos.
+【場景卡 ${s.id}】${s.desc||""}`;
+    try{ p._setPlates[s.id]=await storyboardFrame(prompt,brandRefs.slice(0,3)); }catch(e){ /* 空景失敗不擋流程 */ }
     renderStoryboardRefs(specs);
   }
   return p._setPlates;
 }
+function cropGridPanels(gridUrl,count){
+  return new Promise(res=>{
+    const img=new Image();
+    img.onload=()=>{ try{
+      const cols=3, rows=Math.ceil(count/3);
+      const cw=img.width/cols, ch=img.height/rows, out=[];
+      for(let i=0;i<count;i++){
+        const c=document.createElement("canvas"); c.width=Math.round(cw); c.height=Math.round(ch);
+        c.getContext("2d").drawImage(img,(i%cols)*cw,Math.floor(i/cols)*ch,cw,ch,0,0,c.width,c.height);
+        out.push(c.toDataURL("image/jpeg",0.9));
+      }
+      res(out);
+    }catch(e){res([]);} };
+    img.onerror=()=>res([]);
+    img.src=gridUrl;
+  });
+}
+async function generateStoryboardGrid(specs){
+  const p=state.project; const shots=p?.shots||[]; if(!p||!shots.length)return null;
+  const frames=shots.map(s=>specs.frames.find(f=>Number(f.id)===Number(s.id))).filter(Boolean).slice(0,9);
+  const rows=Math.ceil(frames.length/3);
+  const refs=[]; const notes=[];
+  for(const c of (specs.characters||[]).slice(0,2)){ const u=p._charSheets?.[c.id]; if(u){ refs.push(await shrinkToPngB64(u,480)); notes.push(`image ${refs.length} = the ${c.role} (same person in every panel where present)`); } }
+  const firstPlate=Object.values(p._setPlates||{})[0]; if(firstPlate&&refs.length<3){ refs.push(await shrinkToPngB64(firstPlate,480)); notes.push(`image ${refs.length} = the main location`); }
+  const vstyle=p._style;
+  const prompt=`Storyboard contact sheet: a clean ${rows}x3 grid of ${frames.length} equally sized panels with thin white gutters, numbered left-to-right, top-to-bottom, no text or numbers drawn inside panels. Same real-photograph style in every panel (${vstyle?vstyle.photo:"natural light, phone camera realism"}). ${notes.join("; ")}. Keep the same people, wardrobe and location consistent across all panels.
+${frames.map((f,i)=>`Panel ${i+1}: ${f.render||f.spec}`).join("\n")}
+${frames.length<rows*3?`Panels ${frames.length+1}-${rows*3}: plain dark grey, empty.`:""}
+No text, no letters, no logos anywhere.`;
+  const url=await storyboardFrame(prompt,refs,"1:1");
+  const panels=await cropGridPanels(url,frames.length);
+  p._grid=url; p._panels={};
+  frames.forEach((f,i)=>{ if(panels[i])p._panels[f.id]=panels[i]; });
+  p._gridConfirmed=false;
+  for(const [id,u] of Object.entries(p._panels)){
+    if(state.frames[id])continue;
+    const cellEl=document.querySelector(`[data-scene-row="${id}"] .script-visual`); if(!cellEl)continue;
+    let im=cellEl.querySelector(".sb-thumb"); if(!im){ im=document.createElement("img"); im.className="sb-thumb sb-sketch"; im.alt=`鏡 ${id} 草圖`; im.title="九宮格總表的對應格(草圖),確認後會逐鏡精修"; const btn=cellEl.querySelector("[data-sb-one]"); if(btn)btn.insertAdjacentElement("beforebegin",im); else cellEl.appendChild(im); }
+    im.src=u;
+  }
+  renderStoryboardRefs(specs);
+  return url;
+}
 function renderStoryboardRefs(specs){
   const box=$("#sb-refs"); const p=state.project; if(!box||!p)return;
   const items=[];
-  if(p._charSheet)items.push(`<div class="sb-ref"><img src="${p._charSheet}" alt="角色定妝照"><span>角色定妝照</span><button type="button" class="btn small ghost" data-sb-ref="char">重生</button></div>`);
+  for(const c of (specs?.characters||[])){ const u=p._charSheets?.[c.id]; if(u)items.push(`<div class="sb-ref"><img src="${u}" alt="角色 ${escapeHtml(c.id)} 定妝照"><span>角色 ${escapeHtml(c.id)}・${escapeHtml(c.role||"")}</span><button type="button" class="btn small ghost" data-sb-ref="char:${escapeHtml(c.id)}">重生</button></div>`); }
   for(const s of (specs?.sets||[])){ const u=p._setPlates?.[s.id]; if(u)items.push(`<div class="sb-ref"><img src="${u}" alt="場景 ${escapeHtml(s.id)} 空景"><span>場景 ${escapeHtml(s.id)} 空景</span><button type="button" class="btn small ghost" data-sb-ref="set:${escapeHtml(s.id)}">重生</button></div>`); }
+  if(p._grid){ items.push(`<div class="sb-ref" style="min-width:150px"><img src="${p._grid}" alt="九宮格總表" style="width:120px;aspect-ratio:1/1"><span>九宮格總表(全片草圖)</span><span style="display:flex;gap:4px"><button type="button" class="btn small ghost" data-sb-ref="grid">重生總表</button>${p._gridConfirmed?"":`<button type="button" class="btn small teal" data-sb-ref="confirm">確認,逐鏡精修</button>`}</span></div>`); }
   box.innerHTML=items.length?`<div class="sb-ref" style="justify-content:center;color:#d9c9a8"><span>全片基準</span><span style="font-size:10px;text-align:center">每一鏡都以這些圖鎖人、鎖景<br>不滿意先在這裡重生</span></div>${items.join("")}`:"";
   box.classList.toggle("hidden",!items.length);
 }
 async function regenStoryboardRef(which){
   const specs=state.project?._frameSpecs; const st=$("#sb-status");
   if(!specs||sbRunning)return;
+  if(which==="confirm"){ state.project._gridConfirmed=true; renderStoryboardRefs(specs); generateStoryboardFrames(); return; }
   sbRunning=true;
   try{
-    if(which==="char"){ genStage(st,"重生角色定妝照…",14); await ensureCharacterSheet(specs,true); }
+    if(String(which).startsWith("char:")){ const id=String(which).slice(5); genStage(st,`重生角色 ${id} 定妝照…`,14); await ensureCharacterSheets(specs,true,id); }
     else if(String(which).startsWith("set:")){ const id=String(which).slice(4); genStage(st,`重生場景 ${id} 空景…`,14); await ensureSetPlates(specs,true,id); }
-    if(st){ st.className="status-line ok"; st.textContent="✓ 基準圖已更新。之後生成/重生的示意圖都會以新的基準鎖人鎖景;已生成的鏡請按「重生示意圖」套用。"; }
-  }catch(e){ if(st){ st.className="status-line err"; st.textContent=`✗ 基準圖重生失敗:${e.message}`; } }
+    else if(which==="grid"){ genStage(st,"重生九宮格總表…",18); await generateStoryboardGrid(specs); }
+    if(st){ st.className="status-line ok"; st.textContent=which==="grid"?"✓ 總表已更新。看整體對了再按「確認,逐鏡精修」。":"✓ 基準圖已更新。之後生成/重生的示意圖都會以新的基準鎖人鎖景;建議先按「重生總表」再逐鏡精修。"; }
+  }catch(e){ if(st){ st.className="status-line err"; st.textContent=`✗ 重生失敗:${e.message}`; } }
   finally{ sbRunning=false; }
 }
 let sbRunning=false;
@@ -5446,95 +5509,88 @@ async function generateStoryboardFrames(onlyId){
   if(!shots.length){ if(st){st.className="status-line err";st.textContent="✗ 請先生成腳本";} return; }
   if(!window.IRIS_SUPABASE?.configured?.()||!window.IRIS_SUPABASE.user()){ if(st){st.className="status-line err";st.textContent="✗ 請先登入";} return; }
   sbRunning=true;
-  const vstyle=state.project?._style;
-  const photoLang=vstyle
-    ? `【攝影風格・全片統一】「${vstyle.name}」(${vstyle.desc}):${vstyle.photo}。`
-    : `【攝影風格】寫實手持 UGC 質感,自然光線,不要棚拍廣告感。`;
-  const consistency=`${photoLang}
-【反塑膠感鐵則】必須像真實攝影師拍出的一格:光線要有明確方向與來源;皮膚、金屬、布料保留真實紋理與微小瑕疵;背景要有真實生活痕跡(使用過的工具、輕微磨損)。禁止:均勻無影的打光、過度平滑的磨皮質感、完美對稱的置中構圖、塑膠感高光。
-【一致性鐵律】整個分鏡系列屬於同一支影片:同一位主角、同一件服裝、同一種色溫與畫質。附上的參考圖【只管】人物長相、髮型、衣著與場地陳設——構圖、景別、視角、機位一律以本鏡文字規格為準,嚴禁沿用參考圖的視角與景別。
-【光線基準】色溫與畫質基調以參考圖為基準;但本鏡若明寫光線規格(夜間、車內微光、白光爆發),以文字規格為準——嚴禁把夜戲畫成白天。描述要求的亮度變化只改該光源,環境基準不動。
-【禁令】畫面中不得出現任何文字、字母、數字、Logo、招牌字;不得出現本鏡描述以外的任何人物。9:16 直式。
-【整片氛圍】${state.project?.anchor||""}`;
-  const brandRefs=[];
-  for(const a of (state.brandAssets||[]).slice(0,2)){ const b=await shrinkToPngB64(typeof a==="string"?a:a.url,480); if(b)brandRefs.push(b); }
-  let specs=state.project?._frameSpecs||null;
+  const p=state.project;
+  const vstyle=p._style;
+  const styleLine=vstyle?vstyle.photo:"natural light, phone camera realism";
+  try{
+  let specs=p._frameSpecs||null;
   if(!specs){
-    genStage(st,"分鏡轉譯中:建立角色定妝卡、場景卡與逐鏡圖像規格…",12);
-    try{ specs=await storyboardSpecs(state.project); if(state.project)state.project._frameSpecs=specs; }
+    genStage(st,"分鏡轉譯中:辨識角色、建立場景卡與逐鏡渲染規格…",12);
+    try{ specs=await storyboardSpecs(p); p._frameSpecs=specs; }
     catch(e){ specs=null; if(st){st.className="status-line";st.textContent=`轉譯器暫不可用(${e.message}),改用直接模式生成…`;} }
   }
-  let charSheet=null, setPlates={};
   if(specs){
-    try{
-      if(!state.project._charSheet){ genStage(st,"建立角色定妝照(全片身分基準,之後每一鏡都以它鎖人)…",16); }
-      charSheet=await ensureCharacterSheet(specs,false);
-    }catch(e){ charSheet=null; if(st){st.className="status-line";st.textContent=`定妝照生成失敗(${e.message}),改以第 1 鏡為身分參考…`;} }
-    try{
-      const missing=(specs.sets||[]).filter(s=>!state.project._setPlates?.[s.id]).length;
-      if(missing){ genStage(st,`建立場景空景 ${missing} 張(全片場地基準,同場景每鏡都以它鎖景)…`,14*missing); }
-      setPlates=await ensureSetPlates(specs,false);
-    }catch(e){ setPlates=state.project._setPlates||{}; }
+    const missingChars=(specs.characters||[]).filter(c=>!p._charSheets?.[c.id]).length;
+    if(missingChars){ genStage(st,`建立 ${missingChars} 位角色的定妝照(${(state.brandPeople||[]).length?"以你上傳的真人照片為準":"AI 生成,可在下方重生"})…`,16*missingChars); }
+    try{ await ensureCharacterSheets(specs,false); }catch(e){}
+    const missingSets=(specs.sets||[]).filter(s=>!p._setPlates?.[s.id]).length;
+    if(missingSets){ genStage(st,`建立場景空景 ${missingSets} 張(全片場地基準)…`,14*missingSets); }
+    try{ await ensureSetPlates(specs,false); }catch(e){}
+    if(!onlyId&&!p._gridConfirmed){
+      genStage(st,"生成九宮格總表(全片草圖,一次看整體是否對人、對店、對劇本)…",20);
+      try{
+        await generateStoryboardGrid(specs);
+        if(st){ st.className="status-line ok"; st.textContent="✓ 九宮格總表完成——請看下方「全片基準」:人對不對、店對不對、每格是不是劇本那一鏡。對了按「確認,逐鏡精修」;不對先重生定妝照/空景/總表。"; }
+        return;
+      }catch(e){ if(st){st.className="status-line";st.textContent=`總表生成失敗(${e.message}),直接逐鏡生成…`;} }
+    }
   }
   const setDesc=id=>{ const s=(specs?.sets||[]).find(x=>x.id===id); return s?.desc||specs?.sets?.[0]?.desc||""; };
   const targets=onlyId?shots.filter(s=>s.id===onlyId):shots;
   let done=0; const failed=[]; const rejected=[];
-  const charB64=charSheet?await shrinkToPngB64(charSheet,480):null;
-  try{
+  const sheetB64={}; for(const c of (specs?.characters||[])){ const u=p._charSheets?.[c.id]; if(u)sheetB64[c.id]=await shrinkToPngB64(u,480); }
+  const brandRefs=[]; if(!Object.keys(p._setPlates||{}).length){ for(const a of (state.brandAssets||[]).slice(0,2)){ const b=await shrinkToPngB64(typeof a==="string"?a:a.url,480); if(b)brandRefs.push(b); } }
   for(const shot of targets){
-    genStage(st,`分鏡示意圖 ${done+failed.length+1}/${targets.length}(鏡 ${shot.id}):生成中(定妝照鎖人、空景鎖景)…`,14);
+    genStage(st,`分鏡示意圖 ${done+failed.length+rejected.length+1}/${targets.length}(鏡 ${shot.id}):生成中…`,14);
     const idx=shots.indexOf(shot);
     const fr=specs?.frames?.find(f=>Number(f.id)===Number(shot.id));
     const prevFr=idx>0?specs?.frames?.find(f=>Number(f.id)===Number(shots[idx-1].id)):null;
     const sameSet=!fr||!prevFr||fr.set===prevFr.set;
-    const refs=[]; const refNotes=[];
-    const plate=fr?setPlates?.[fr.set]:null;
-    const anchorF=state.frames[shots[0].id];
-    const prevF=idx>0?state.frames[shots[idx-1].id]:null;
-    if(charB64){ refs.push(charB64); refNotes.push(`參考圖 ${refs.length}=角色定妝照:主角必須與這張是【同一個人】——臉、髮型、膚色、身材、服裝逐項一致,禁止換人`); }
-    else if(anchorF&&shot.id!==shots[0].id){ refs.push(await shrinkToPngB64(anchorF,480)); refNotes.push(`參考圖 ${refs.length}=第 1 鏡成品:主角與它為同一人`); }
-    if(plate){ refs.push(await shrinkToPngB64(plate,480)); refNotes.push(`參考圖 ${refs.length}=場景 ${fr.set} 空景:場地、陳設、光線來源必須與它一致,這是同一個地方`); }
-    else{ for(const b of brandRefs){ if(refs.length<3){ refs.push(b); refNotes.push(`參考圖 ${refs.length}=品牌真實素材:陳設與色彩以它為準`); } } }
-    if(prevF&&sameSet&&refs.length<3){ refs.push(await shrinkToPngB64(prevF,480)); refNotes.push(`參考圖 ${refs.length}=同場景的前一鏡:延續其光線與陳設,只改構圖與動作`); }
-    const prompt=fr?`【鏡位規格・第一優先・逐字執行】景別:${fr.size||"依規格"}|機位:${fr.cam||"依規格"}|定格瞬間:${fr.moment||"動作的最終狀態"}|光線:${fr.light||"依場景卡"}。這四項決定構圖——景別與視角錯了,整張圖就是廢圖。
-【參考圖的用途・逐條執行】${refNotes.join(";")||"無參考圖"}。參考圖只提供「人是誰、地方長怎樣」;構圖、景別、視角一律以本鏡文字規格為準。
-【角色卡・全片逐字固定】${specs.character||""}
-【場景卡(${fr.set})・固定陳設】${setDesc(fr.set)}
-【本鏡畫面規格】${fr.spec}
-【必備元素・缺一即為失敗作品】${(fr.must||[]).join("、")||"依規格"}
-${fr.ban?.length?`【明確禁止出現】${fr.ban.join("、")}`:""}
-【同機位延續】規格若說「同一機位/延續上一鏡」,構圖、亮度、光源與前一鏡參考圖幾乎完全相同,只改人物動作表情。
-${consistency}
-【輸出要求】直接輸出一張 9:16 圖片。不要輸出任何文字、說明或問題——只要圖片。`
-    :`【本鏡畫面・最高優先,逐字執行】${shot.action_prompt||shot.img_prompt||"品牌日常實景"}
-【構圖重點】上面描述中的「視角/鏡頭位置」(例如:從車內往外拍、特寫、俯拍)是本張圖的第一要務,必須精準呈現,不可改成旁觀視角。
-【靜態轉譯規則】這是影片分鏡的「單格劇照」:描述若含時間變化(從暗到亮、瞬間切換、轉變、before/after),只呈現【變化完成後的最終狀態】,不要畫中間過程——例如「車燈瞬間變亮」就畫車燈全亮、光束清晰照亮前方的那一刻。句首若有運鏡標記(如【推近】【跟拍】【固定鏡頭】),那是給影片用的:靜態圖改以該運鏡的代表景別呈現(推近=特寫/近景、拉遠=全景、俯視=高角度),標記本身絕不入畫。
-【動作與手勢】描述中的人物動作、手勢、表情必須逐項精準執行,不可替換或省略。常見對照:比讚=單手豎起大拇指、點頭微笑=看向鏡頭微笑、招手=手掌張開揮動。
-【同機位延續】描述若說「同一機位」「延續上一鏡」「依然明亮/依然如此」,本張圖的構圖、亮度、光源狀態必須與前一張參考圖幾乎完全相同——把前一張圖當底,只改人物的動作與表情,其他一律不動。
-${shot.img_prompt&&shot.img_prompt!==shot.action_prompt?`【視覺補充】${shot.img_prompt}`:""}
-${consistency}
-【輸出要求】直接輸出一張 9:16 圖片。不要輸出任何文字、說明或問題——只要圖片。`;
+    const refs=[]; const notes=[];
+    const cast=(fr?.cast||["A"]).filter(id=>sheetB64[id]);
+    for(const id of cast){ if(refs.length<2){ refs.push(sheetB64[id]); const role=(specs.characters||[]).find(c=>c.id===id)?.role||id; notes.push(`image ${refs.length} = the ${role}: the SAME person (face, hair, skin, build, outfit)`); } }
+    const plate=fr?p._setPlates?.[fr.set]:null;
+    if(plate&&refs.length<3){ refs.push(await shrinkToPngB64(plate,480)); notes.push(`image ${refs.length} = the location: same place, same fixtures, same light source`); }
+    else if(!plate){ for(const b of brandRefs){ if(refs.length<3){ refs.push(b); notes.push(`image ${refs.length} = real shop photo: match fixtures and colours`); } } }
+    const panel=p._panels?.[shot.id];
+    if(panel&&refs.length<3){ refs.push(await shrinkToPngB64(panel,480)); notes.push(`image ${refs.length} = the approved rough sketch of THIS shot: keep its composition and staging, render it in full quality`); }
+    else if(!panel){ const prevF=idx>0?state.frames[shots[idx-1].id]:null; if(prevF&&sameSet&&refs.length<3){ refs.push(await shrinkToPngB64(prevF,480)); notes.push(`image ${refs.length} = previous shot in the same location: continue its light and fixtures`); } }
+    const castLine=cast.map(id=>{const c=(specs.characters||[]).find(x=>x.id===id);return c?`${c.role}: ${c.desc}`:"";}).filter(Boolean).join(";");
+    const prompt=fr?`${fr.render||fr.spec}
+Shot ${shot.id}: ${fr.size||""} | camera: ${fr.cam||""} | frozen instant: ${fr.moment||""} | light: ${fr.light||""}.
+MUST show: ${(fr.must||[]).join(", ")||"as described"}. MUST NOT show: ${(fr.ban||[]).join(", ")}. Exactly ${cast.length||1} person(s) in frame, nobody else.
+References: ${notes.join("; ")||"none"}. References fix WHO and WHERE only; framing, shot size and angle follow this text.
+Style: ${styleLine}. Real photograph, directional light, real textures, lived-in details; no plastic skin, no text, no letters, no logos. 9:16 vertical.
+【腳本原句・內容錨點】${shot.action_prompt||""}
+【角色】${castLine||specs.characters?.[0]?.desc||""}
+【場景 ${fr.set}】${setDesc(fr.set)}
+Output one 9:16 image only, no words.`
+    :`【本鏡畫面・逐字執行】${shot.action_prompt||shot.img_prompt||"品牌日常實景"}
+【靜態轉譯】這是單格劇照:含時間變化的描述只畫「變化完成後」;句首運鏡標記改以代表景別呈現(推近=特寫、拉遠=全景、俯視=高角度),標記不入畫。品牌商品用完整名詞理解(燈具=汽車頭燈總成)。
+【角色與場景】${p.anchor||""}
+Style: ${styleLine}. Real photograph, no text, no letters, no logos, no extra people. 9:16 vertical. Output one image only.`;
     let url=null;
-    for(let sbTry=1; sbTry<=3 && !url; sbTry++){ /* 單張最多 3 次,失敗換下一張,不中斷整批 */
+    for(let sbTry=1; sbTry<=3 && !url; sbTry++){
       try{ url=await storyboardFrame(prompt,refs); }
       catch(e){
         if(sbTry===3){ failed.push({id:shot.id,msg:e.message}); }
-        else{ genStage(st,`鏡 ${shot.id} 第 ${sbTry} 次未取得圖片,自動重試…`,12); await new Promise(r2=>setTimeout(r2,2000)); }
+        else{ genStage(st,`鏡 ${shot.id} 第 ${sbTry} 次未取得圖片,自動重試…`,12); await new Promise(r2=>setTimeout(r2,2500*sbTry)); }
       }
     }
     if(!url)continue;
     let qcFail=null;
+    const qcSheet=cast.length?p._charSheets?.[cast[0]]:null;
     if(fr){
-      genStage(st,`鏡 ${shot.id}:視覺驗收中(是否同一人、必備元素、景別機位)…`,6);
-      let qc=await frameQualityCheck(fr,url,charSheet);
+      genStage(st,`鏡 ${shot.id}:視覺驗收中(同一人、核心必備、景別)…`,6);
+      let qc=await frameQualityCheck(fr,url,qcSheet);
       if(qc&&qc.ok===false&&(qc.problems||[]).length){
         genStage(st,`鏡 ${shot.id} 驗收未過(${qc.problems[0]}),帶著錯誤清單重生…`,14);
         try{
-          const url2=await storyboardFrame(`${prompt}\n【上一張的錯誤・本張必須修正】${qc.problems.slice(0,4).join(";")}`,refs);
+          const url2=await storyboardFrame(`${prompt}\nFIX these errors from the previous attempt: ${qc.problems.slice(0,4).join("; ")}`,refs);
           if(url2){
             url=url2;
             genStage(st,`鏡 ${shot.id}:二次驗收中…`,6);
-            const qc2=await frameQualityCheck(fr,url,charSheet);
+            const qc2=await frameQualityCheck(fr,url,qcSheet);
             if(qc2&&qc2.ok===false&&(qc2.problems||[]).length) qcFail=qc2.problems[0];
           } else qcFail=qc.problems[0];
         }catch(e){ qcFail=qc.problems[0]; }
@@ -5545,6 +5601,7 @@ ${consistency}
     const cellEl=document.querySelector(`[data-scene-row="${shot.id}"] .script-visual`);
     if(cellEl){
       let im=cellEl.querySelector(".sb-thumb"); if(!im){ im=document.createElement("img"); im.className="sb-thumb"; im.alt=`鏡 ${shot.id} 示意圖`; cellEl.appendChild(im);} im.src=url;
+      im.classList.remove("sb-sketch"); im.title="";
       im.classList.toggle("sb-failed",!!qcFail);
       let tag=cellEl.querySelector(".sb-fail-tag"); if(qcFail){ if(!tag){ tag=document.createElement("span"); tag.className="sb-fail-tag"; im.insertAdjacentElement("afterend",tag);} tag.textContent=`⚠ 驗收未過:${qcFail}`; } else if(tag)tag.remove();
       const one=cellEl.querySelector("[data-sb-one]"); if(one)one.textContent="重生示意圖";
@@ -5552,9 +5609,9 @@ ${consistency}
     done++;
   }
   if(st){
-    if(!failed.length&&!rejected.length){ st.className="status-line ok"; st.textContent=`✓ 示意圖完成 ${done}/${targets.length},全部通過視覺驗收(同一人、必備元素、景別)。生成影片時會以這些畫面為各段基準,所見即所得。`; }
+    if(!failed.length&&!rejected.length){ st.className="status-line ok"; st.textContent=`✓ 示意圖完成 ${done}/${targets.length},全部通過視覺驗收(同一人、核心必備、景別)。生成影片時會以這些畫面為各段基準,所見即所得。`; }
     else if(failed.length){ st.className="status-line err"; st.textContent=`完成 ${done}/${targets.length};鏡 ${failed.map(f=>f.id).join("、")} 未成功(${failed[0].msg})——點該鏡的「生成示意圖」單獨重試即可。`; }
-    else{ st.className="status-line err"; st.textContent=`完成 ${done}/${targets.length},但鏡 ${rejected.map(r=>r.id).join("、")} 兩次驗收都未過(已標紅:${rejected[0].msg})——請按該鏡「重生示意圖」,或先重生上方的定妝照/空景再重生。`; }
+    else{ st.className="status-line err"; st.textContent=`完成 ${done}/${targets.length},但鏡 ${rejected.map(r=>r.id).join("、")} 兩次驗收都未過(已標紅:${rejected[0].msg})——按該鏡「重生示意圖」,或先重生定妝照/空景/總表再重生。`; }
   }
   }finally{ sbRunning=false; }
 }
@@ -7030,6 +7087,26 @@ function updateAssetStatus(){
 }
 function saveAssets(){ /* memory only */ }
 function loadAssets(){ /* intentionally does not read persistent storage */ }
+function renderPeopleThumbs(){
+  const box=$("#bk-people-thumbs"); if(!box)return;
+  box.innerHTML=(state.brandPeople||[]).map((p,i)=>`<span style="position:relative;display:inline-block;margin:4px 6px 0 0"><img src="${escapeHtml(p.url)}" alt="${escapeHtml(p.name||"人物照")}" style="width:54px;height:72px;object-fit:cover;border-radius:8px;border:1px solid var(--line2)"><button class="btn small ghost" data-del-person="${i}" style="position:absolute;top:-6px;right:-6px;padding:0 6px;border-radius:99px;line-height:18px">✕</button></span>`).join("");
+  box.querySelectorAll("[data-del-person]").forEach(b=>b.addEventListener("click",()=>{ state.brandPeople.splice(Number(b.dataset.delPerson),1); renderPeopleThumbs(); updatePeopleStatus(); }));
+}
+function updatePeopleStatus(){
+  const n=(state.brandPeople||[]).length, el=$("#bk-people-status"); if(!el)return;
+  el.textContent=n?`✓ 已載入 ${n} 位人物照——分鏡定妝照與影片主角會以這${n===1?"位":"兩位"}真人為準`:"未上傳人物照(將由 AI 生成一位虛構主角;上傳真人可讓影片主角就是老闆本人)";
+  el.className=n?"status-line ok":"status-line";
+}
+$("#bk-people")?.addEventListener("change",async e=>{
+  const files=Array.from(e.target.files||[]).slice(0,2);
+  state.brandPeople=[];
+  for(const f of files){
+    try{ await validateImageFile(f); const url=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f);}); state.brandPeople.push({name:f.name,url}); }
+    catch(error){ const el=$("#bk-people-status"); if(el)el.textContent=`${f.name} 已拒絕:${error.message}`; }
+  }
+  if(state.project){ state.project._charSheets=null; state.project._charSheet=null; }
+  renderPeopleThumbs(); updatePeopleStatus(); e.target.value="";
+});
 $("#bk-assets").addEventListener("change", async (e)=>{
   const files=Array.from(e.target.files||[]).slice(0,6);
   if(files.reduce((n,f)=>n+f.size,0)>32*1048576){$("#bk-assets-status").textContent="圖片總額不得超過 32MB";e.target.value="";return;}
@@ -9876,7 +9953,8 @@ function renderScriptLines(findings){
       +(()=>{ /* 畫面指示格:附示意圖縮圖與單鏡重生 */
         const base=cell("action_prompt",shot.action_prompt||"","script-visual","畫面指示");
         const f=state.frames[shot.id];
-        return base.replace(/<\/div>$/,`${f?`<img class="sb-thumb" src="${f}" alt="鏡 ${shot.id} 示意圖">`:""}<button type="button" class="btn small ghost sb-one" data-sb-one="${escapeHtml(shot.id)}">${f?"重生示意圖":"生成示意圖"}</button></div>`);
+        const sketch=!f&&state.project?._panels?.[shot.id]; /* 九宮格總表的對應格:精修前先看草圖 */
+        return base.replace(/<\/div>$/,`${f?`<img class="sb-thumb" src="${f}" alt="鏡 ${shot.id} 示意圖">`:sketch?`<img class="sb-thumb sb-sketch" src="${sketch}" alt="鏡 ${shot.id} 草圖" title="九宮格總表的對應格(草圖),確認後會逐鏡精修">`:""}<button type="button" class="btn small ghost sb-one" data-sb-one="${escapeHtml(shot.id)}">${f?"重生示意圖":"生成示意圖"}</button></div>`);
       })()
       +cell("caption",shot.caption?.main||"","script-caption","字幕（建議）")
       +cell("img_prompt",shot.img_prompt||"","script-need","素材需求")
