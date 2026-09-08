@@ -10838,6 +10838,13 @@ function installAuthControls(){
   $("#btn-auth-close").addEventListener("click",close);
   $("#auth-modal-bg").addEventListener("click",event=>{ if(event.target.id==="auth-modal-bg")close(); });
 
+  let authCooldownTimer=null;
+  const startAuthCooldown=(seconds,email)=>{
+    const button=$("#btn-auth-send"); let left=Math.max(1,Math.round(seconds));
+    clearInterval(authCooldownTimer); button.disabled=true;
+    const tick=()=>{ button.textContent=`重寄(${left}s)`; if(left<=0){ clearInterval(authCooldownTimer); button.disabled=false; button.textContent="寄出登入連結"; } left--; };
+    tick(); authCooldownTimer=setInterval(tick,1000);
+  };
   $("#btn-auth-send").addEventListener("click",async()=>{
     const email=$("#auth-email").value.trim();
     const button=$("#btn-auth-send");
@@ -10845,13 +10852,23 @@ function installAuthControls(){
     try{
       const result=await window.IRIS_SUPABASE.signInWithEmail(email);
       $("#auth-code-row").classList.remove("hidden");
-      say(`已寄到 ${email}。點連結,或輸入信中的驗證碼。`,"ok");
+      say(`已寄到 ${email}。請到信箱點連結,或輸入信中的驗證碼(沒看到請查垃圾郵件;一分鐘內只會寄一封)。`,"ok");
+      startAuthCooldown(60,email);
       void result;
     }catch(error){
+      const msg=String(error?.message||"");
+      const wait=msg.match(/after (\d+) seconds/i);
+      if(wait||/rate limit|over_email_send/i.test(msg)){
+        $("#auth-code-row").classList.remove("hidden");
+        say(`驗證信剛剛已經寄出,請到信箱查收(含垃圾郵件),點連結或輸入驗證碼即可;${wait?wait[1]:60} 秒後才能再寄一封。`,"ok");
+        startAuthCooldown(wait?Number(wait[1]):60,email);
+        return;
+      }
       say(error.code==="SECURITY_LOCKED"
         ?"這個版本尚未連線到專案,無法登入。"
-        :error.code==="INVALID_REQUEST"?"請輸入有效的 Email。":`寄送失敗:${error.message}`,"err");
-    }finally{ button.disabled=false; }
+        :error.code==="INVALID_REQUEST"?"請輸入有效的 Email。":`寄送失敗:${msg}`,"err");
+      button.disabled=false;
+    }
   });
 
   $("#btn-auth-verify").addEventListener("click",async()=>{
