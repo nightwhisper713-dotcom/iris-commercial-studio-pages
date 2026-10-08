@@ -2455,8 +2455,8 @@ body.home-screen header h1.brand-mark b{font-size:18px}
         <h2>一鍵生成中</h2>
         <div class="card">
           <label style="margin-top:0"><input type="checkbox" id="opt-chain" checked> 首幀接力(上一鏡末幀 → 下一鏡首幀,連貫性)</label>
-          <label><input type="checkbox" id="opt-refimgs" checked> 角色/場景參考圖(若不支援會自動改用首幀模式續跑)</label>
-          <label><input type="checkbox" id="opt-audio-param"> 【僅草稿模式讀取】生成環境音——正式生成一律原生產生人聲與環境音</label>
+          <label><input type="checkbox" id="opt-refimgs" checked> 使用每鏡分鏡圖作為生成首幀（鎖定人物與場景）</label>
+          <label><input type="checkbox" id="opt-audio-param"> 生成環境音（中文旁白由後製配音，不宣稱可直接產生中文口白）</label>
           <progress id="gen-progress" value="0" max="100" style="margin-top:10px"></progress>
           <div id="gen-log">等待審核通過後自動開始。</div>
           <div class="row" style="margin-top:8px">
@@ -2666,12 +2666,12 @@ body.home-screen header h1.brand-mark b{font-size:18px}
       <h2 style="margin:0"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-settings"></use></svg>連線設定(僅存瀏覽器記憶體)</h2>
       <button class="btn small ghost" id="settings-close"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-close"></use></svg>關閉</button>
     </div>
-    <div class="hidden" aria-hidden="true"><input id="cfg-yt-key" disabled><input id="cfg-img-base" disabled><select id="cfg-engine" disabled></select><select id="cfg-veo-model" disabled></select><input id="cfg-site-base" disabled><select id="cfg-h3-res" disabled></select></div>
+    <div class="hidden" aria-hidden="true"><input id="cfg-yt-key" disabled><input id="cfg-img-base" disabled><select id="cfg-engine" disabled><option value="server-video" selected>server-video</option></select><select id="cfg-veo-model" disabled><option value="server-managed" selected>server-managed</option></select><input id="cfg-site-base" disabled><select id="cfg-h3-res" disabled></select></div>
     <div class="grid2 customer-settings">
       <div><label>目前方案</label><select id="plan-select"></select></div>
       <div><label>正式交付品質</label><select id="quality-tier"><option value="standard">標準 1080p</option><option value="high">高品質（可能需要加購）</option></select></div>
       <div><label>介面語言</label><div class="status-line">繁體中文／English 可由頁首切換</div></div>
-      <div><label>資料安全</label><div class="status-line ok">客戶素材只留在工作階段；雲端保存需登入後啟用</div></div>
+      <div><label>資料安全</label><div class="status-line ok">客戶素材只留在工作階段；雲端保存需登入後啟用</div><button class="btn small ghost" type="button" id="btn-export-project-csv" style="margin-top:8px"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-export"></use></svg>下載專案資料與操作紀錄 CSV</button><div class="status-line" id="project-data-export-status" role="status" aria-live="polite"></div></div>
     </div>
     <div class="card" id="entitlement-card" style="margin-top:12px">
       <h3 style="margin-top:0">本案方案與交付（Mock）</h3>
@@ -2742,6 +2742,7 @@ const I18N_PHRASES=Object.assign(Object.create(null),{
   "重新錄製": "Record again",
   "停止": "Stop",
   "素材僅用於本次專案，絕不對外公開。": "Material is used only for this project and is never made public.",
+  "行動按鈕文字（直接修改）": "Call-to-action text (edit directly)",
   "播放": "Play",
   "上傳並加入排程": "Upload and add to schedule",
   "連線設定(僅存瀏覽器記憶體)": "Connection settings (browser memory only)",
@@ -2749,6 +2750,10 @@ const I18N_PHRASES=Object.assign(Object.create(null),{
   "段影片回填(跨域下載被擋時才需要)": "Segment refill (only needed when a cross-origin download is blocked)",
   "審核通過,開始一鍵生成": "Approve review and start production",
   "生成品牌腳本+分鏡": "Generate brand script + storyboard",
+  "生成示意圖": "Generate storyboard frames",
+  "每鏡生成一張 {}:{} 示意圖,前後鏡互鎖一致性;生成影片時沿用": "Generate one {}:{} reference frame per shot, keep character and setting continuity, and reuse it for video generation",
+  "打字時以本機規則引擎即時檢核；按「重新檢核」會加跑雲端語意逐句審核(需登入)，本腳本尚未跑過雲端審核。": "Local rules check the script while you type. Recheck also runs cloud semantic review line by line after sign-in; this script has not yet had a cloud review.",
+  "打字時以本機規則引擎即時檢核；按「重新檢核」會加跑雲端語意逐句審核(需登入)。上次雲端審核:{}:{}。": "Local rules check the script while you type. Recheck also runs cloud semantic review line by line after sign-in. Last cloud review: {}:{}.",
   "已自動儲存": "Auto-saved",
   "✓ 通過": "✓ Passed",
   "清除": "Clear",
@@ -2756,12 +2761,15 @@ const I18N_PHRASES=Object.assign(Object.create(null),{
   "✕ 關閉": "✕ Close",
   "✦ 點擊「＋」可套用到標語欄位，或自行編輯。": "✦ Click “＋” to apply a suggestion to the slogan field, or edit it yourself.",
   "由想法生成腳本 → 進審核": "Turn the idea into a script → go to review",
-  "【僅草稿模式讀取】生成環境音——正式生成一律原生產生人聲與環境音": "[Draft mode only] Generate ambient audio — final production always generates voice and ambience natively",
+  "生成環境音（中文旁白由後製配音，不宣稱可直接產生中文口白）": "Generate ambience (Traditional Chinese voice-over is added in post; direct Chinese narration is not claimed)",
   "一鍵生成中": "Producing",
   "上傳你想複刻的爆款(手機螢幕錄影即可)。檔案 <{}MB 最穩;過大請縮短錄影或降畫質。也可直接貼 YouTube 連結。": "Upload the viral clip you want to rebuild (a phone screen recording is fine). Files under {}MB are most reliable; if it is larger, shorten the recording or lower the quality. You can also paste a YouTube link.",
   "上傳圖片／影片": "Upload image / video",
+  "上傳老闆／技師人物照(鎖定影片主角)": "Upload owner / specialist portraits (lock the video lead)",
   "上傳檔案": "Upload files",
   "上傳素材後將顯示預覽": "A preview appears once material is uploaded",
+  "下載專案資料與操作紀錄 CSV": "Download project data and activity log CSV",
+  "已下載完整專案資料與操作紀錄 CSV；不含素材檔、登入憑證或私密連結。": "Downloaded the complete project data and activity log CSV. Media files, sign-in credentials and private links are excluded.",
   "上次儲存：剛剛": "Last saved: just now",
   "下載全部 MP{}": "Download all MP{}",
   "下載選取 MP{}": "Download selected MP{}",
@@ -2971,7 +2979,7 @@ const I18N_PHRASES=Object.assign(Object.create(null),{
   "補充描述": "Additional description",
   "視覺模式": "Visual mode",
   "親切鄰家": "Warm and neighbourly",
-  "角色/場景參考圖(若不支援會自動改用首幀模式續跑)": "Character / scene reference images (falls back to first-frame mode if unsupported)",
+  "使用每鏡分鏡圖作為生成首幀（鎖定人物與場景）": "Use each storyboard image as the generated clip's first frame (locks character and setting)",
   "解析度與 {}:{} 比例": "Resolution and {}:{} ratio",
   "解鎖編輯(會警告)": "Unlock editing (shows a warning)",
   "誇張化痛點,自嘲式 CTA": "Exaggerated pain point, self-deprecating CTA",
@@ -3165,11 +3173,19 @@ const I18N_PHRASES=Object.assign(Object.create(null),{
   "段 {} 來源": "Segment {} source",
   "上傳實拍影片(混剪用)": "Upload real footage (mixed cut)",
   "最多 {} 支・單檔 ≤{}MB・總量 ≤{}MB": "Up to {} clips - {}MB each - {}MB total",
+  "最多 {} 人・正面清楚・分鏡與影片會以真人為準": "Up to {} people - clear front view - storyboards and videos use the real person as reference",
+  "未上傳人物照(將由 AI 生成一位虛構主角;上傳真人可讓影片主角就是老闆本人)": "No portrait uploaded (AI will create a fictional lead; upload a real person to make the owner the video lead)",
+  "依你的產業建議(點一下帶入):": "Suggestions for your industry (click to apply):",
+  "✓ 已載入 {} 位人物照——分鏡定妝照與影片主角會以這位真人為準": "✓ Loaded {} portrait - storyboard references and the video lead will use this person",
+  "✓ 已載入 {} 位人物照——分鏡定妝照與影片主角會以這兩位真人為準": "✓ Loaded {} portraits - storyboard references and the video lead will use these two people",
   "尚未加入實拍影片": "No real footage added yet",
   "正在檢查影片…": "Checking the video files...",
   "影片總額不得超過 {}MB": "Total video size cannot exceed {}MB",
   "目前離線:可稍後再加入實拍影片,已完成的設定會保留。": "You are offline. Add footage later; your settings are kept.",
   "目前離線:實拍段仍可使用,AI 段需連線後才能送出。": "Offline: real-footage segments still work; AI segments need a connection.",
+  "目前顯示的是示範腳本(佔位)。": "A demonstration script placeholder is currently shown.",
+  "展開下方「進階腳本工具」選一種風格並按「生成品牌腳本+分鏡」,這裡就會換成你的品牌真實腳本。": "Open Advanced script tools below, choose a style, and select Generate brand script + storyboard to replace this with your real brand script.",
+  "分鏡示意圖": "Storyboard reference frames",
   "已取得授權": "Rights cleared",
   "AI 生成正式片段": "AI-generated segment",
   "尚無實拍片段——回步驟 {} 上傳,即可讓某一段直接使用自己拍攝的畫面。": "No footage yet - upload in step {} to let a segment use your own recording.",
@@ -4192,13 +4208,7 @@ const STYLES = [
 ];
 const LEN_SHOTS = {20:5, 28:7, 32:8}; // all 4s shots (Veo allows 4/6/8s)
 function plannedDurs(shotCount){
-  const durs = Array(shotCount).fill(4);
-  if(($("#cfg-engine")?.value||"minimax")==="minimax"){
-    const mid = Math.ceil(shotCount/2);
-    const over = mid*4 - 15;
-    if(over > 0) durs[mid-1] = Math.max(2, 4-over);
-  }
-  return durs;
+  return Array(shotCount).fill(4);
 }
 
 const MOCK_PRICING_CATALOG = {
@@ -4222,21 +4232,67 @@ const state = {
   project: null,            // {meta, anchor, voice, shots:[{id,dur,action_prompt,caption:{main,sub},floats,voiceover,img_prompt}], audio}
   media: {},                // shotId -> {kind:'image'|'video', url, el}
   frames: {},               // shotId -> dataURL first-frame image
+  videoJobs: {},            // shotId -> private application job id
+  videoJobKeys: {},         // shotId -> stable idempotency key for submit
   voClips: {},              // shotId -> {url, el, dur}
   music: {url:null, el:null},
-  brandAssets: [],          // merchant photo dataURLs (H3 reference_image)
+  brandAssets: [],          // merchant photo dataURLs used for storyboard/first-frame guidance
   brandPeople: [],          // 老闆/技師人物照 {name,url}(定妝照與影片主角以真人為準)
   userClips: [],
   materialOrder: [],
   sceneAssignments: {},
   materialReady: false,
-  voiceSample: null,        // 6s WAV dataURI (H3 reference_audio, boss voice clone)
-  segMedia: null,           // H3 two-segment output: [{start,dur,el,url}]
+  voiceSample: null,        // 6s WAV dataURI retained locally for consented post-production
+  segMedia: null,           // mixed-cut timeline segments: [{start,dur,el,url,shotIds}]
   entitlement: {source:"mock",planId:"launch",campaignId:"mock-campaign",status:"draft_review",deliverablesRemaining:4,draftRoundsRemaining:3,reviews:[],serverAuthoritative:false},
   approved: false,
   genRunning: false, genAbort: false,
   playing: false, t: 0
 };
+
+function csvCell(value){
+  let text=value==null?"":typeof value==="string"?value:JSON.stringify(value);
+  if(/^[=+\-@]/.test(text))text="'"+text; /* spreadsheet formula injection */
+  return `"${text.replace(/"/g,'""')}"`;
+}
+function buildProjectDataCsv(){
+  const rows=[["record_type","record_id","timestamp","field","value"]];
+  const add=(type,id,at,field,value)=>rows.push([type,String(id??""),String(at??""),String(field??""),value??""]);
+  const generatedAt=new Date().toISOString();
+  add("export","IRIS",generatedAt,"schema_version","1");
+  add("export","IRIS",generatedAt,"locale",locale);
+  const brand=state.brand||{};
+  for(const field of ["name","industry","slogan","cta"])add("brand","current",generatedAt,field,brand[field]??"");
+  const project=state.project||{};
+  add("project","current",generatedAt,"direction",project.directionNote||"");
+  add("project","current",generatedAt,"style",state.styleKey||"");
+  for(const shot of project.shots||[]){
+    const id=shot.id??"";
+    for(const field of ["dur","voiceover","action_prompt","img_prompt"]){add("shot",id,generatedAt,field,shot[field]??"");}
+    add("shot",id,generatedAt,"caption_main",shot.caption?.main||"");
+    add("shot",id,generatedAt,"caption_sub",shot.caption?.sub||"");
+    add("shot",id,generatedAt,"material_assignment",state.sceneAssignments?.[id]||"");
+  }
+  const safeAsset=(asset)=>({id:asset.id||"",kind:asset.kind||"image",name:asset.name||"",authorized:!!asset.authorized,width:asset.width||"",height:asset.height||"",duration:asset.dur||""});
+  for(const asset of [...(state.brandAssets||[]),...(state.userClips||[])])add("material",asset.id||asset.name||"",generatedAt,"metadata",safeAsset(asset));
+  for(const [index,person] of (state.brandPeople||[]).entries())add("person_reference",index+1,generatedAt,"name",person.name||"");
+  for(const entry of state.reviewAudit||[])add("content_review",entry.findingId||"",entry.at||generatedAt,entry.action||"decision",{sceneId:entry.sceneId||"",field:entry.field||"",from:entry.from||"",to:entry.to||""});
+  if(typeof draftReview!=="undefined"){
+    for(const item of draftReview.items||[])add("draft",item.id||"",generatedAt,"status",{status:item.status||"",version:item.version||"",duration:item.duration||""});
+    for(const entry of draftReview.feedback||[])add("draft_feedback",entry.id||"",entry.createdAt||generatedAt,entry.category||"feedback",{draftId:entry.draftId||"",timestamp:entry.timestamp||"",text:entry.text||"",submitted:!!entry.submitted});
+    for(const entry of draftReview.versions||[])add("draft_version",entry.version||"",entry.createdAt||generatedAt,"summary",entry.summary||[]);
+  }
+  for(const entry of state.entitlement?.reviews||[])add("entitlement_review",entry.version||"",entry.confirmedAt||generatedAt,entry.status||"status",{feedbackDue:entry.feedbackDue||"",mock:!!entry.mock});
+  for(const entry of state.lookalike?.provenance||[])add("provenance",entry.id||entry.hash||"",entry.at||generatedAt,entry.type||"event",{payload:entry.payload||entry.data||"",hash:entry.hash||"",prevHash:entry.prevHash||""});
+  return "\uFEFF"+rows.map(row=>row.map(csvCell).join(",")).join("\r\n");
+}
+function exportProjectDataCsv(){
+  const csv=buildProjectDataCsv();
+  const day=new Date().toISOString().slice(0,10).replace(/-/g,"");
+  offerDownload(new Blob([csv],{type:"text/csv;charset=utf-8"}),`IRIS_project_data_${day}.csv`);
+  const status=$("#project-data-export-status");
+  if(status){status.textContent="已下載完整專案資料與操作紀錄 CSV；不含素材檔、登入憑證或私密連結。";status.className="status-line ok";}
+}
 
 function formatPlanPrice(plan){
   if(plan.price===null) return "客製報價";
@@ -5669,7 +5725,8 @@ function adoptScriptVersion(idx){
   if(prev&&prev!==p)prev._frames=state.frames;
   state.scriptVersionIndex=idx; scriptDirection=idx;
   state.project=p;
-  state.media={}; state.frames=p._frames||{}; state.voClips={}; state.approved=false;
+  state.media={}; state.frames=p._frames||{}; state.voClips={};
+  state.videoJobs={}; state.videoJobKeys={}; state.approved=false;
   try{ for(const k of Object.keys(frameImgCache))delete frameImgCache[k]; }catch(e){}
   $("#script-json").value=JSON.stringify(p,null,2);
   const v=p._violations||[];
@@ -6255,51 +6312,80 @@ async function extractLastFrame(videoEl){
   });
 }
 
-async function veoCreate(shot, firstFrameDataUrl, opts){
-  const params = { aspectRatio:"9:16", resolution:"720p", durationSeconds: shot.dur, sampleCount:1, personGeneration:"allow_adult" };
-  if(opts.audioParam) params.generateAudio = true;
-  const inst = { prompt: fullPrompt(shot) };
-  if(firstFrameDataUrl){
-    const p = dataUrlParts(firstFrameDataUrl);
-    if(p) inst.image = { bytesBase64Encoded: p.data, mimeType: p.mimeType };
-  }
-  if(opts.refImgs && opts.refImgs.length){
-    inst.referenceImages = opts.refImgs.map(d=>{
-      const p = dataUrlParts(d);
-      return { image:{ bytesBase64Encoded:p.data, mimeType:p.mimeType }, referenceType:"asset" };
-    });
-  }
-  const model = $("#cfg-veo-model").value;
-  const data = await vertexFetch(`/${model}:predictLongRunning`, { instances:[inst], parameters: params });
-  return data.name;
-}
-async function veoPoll(opName){
-  const model = $("#cfg-veo-model").value;
-  const t0 = Date.now(); let interval = 5000;
-  while(true){
-    if((Date.now()-t0)/1000 > 600) return {status:"failed", error:"逾時 600s(operation 保留:"+opName+")"};
-    await new Promise(r=>setTimeout(r, interval));
-    interval = Math.min(interval*1.5, 15000);
-    let st;
-    try{ st = await vertexFetch(`/${model}:fetchPredictOperation`, {operationName: opName}); }
-    catch(e){ glog("  輪詢錯誤(續):"+e.message); continue; }
-    if(!st.done) continue;
-    if(st.error){
-      const msg = st.error.message || JSON.stringify(st.error);
-      const mod = /safety|blocked|policy|filtered|responsible ai|violat/i.test(msg);
-      return {status: mod ? "moderation_blocked" : "failed", error: msg};
-    }
-    const vids = st.response && st.response.videos;
-    if(vids && vids.length && vids[0].bytesBase64Encoded){
-      return {status:"succeeded", blob: base64ToBlob(vids[0].bytesBase64Encoded, vids[0].mimeType)};
-    }
-    const rai = st.response && st.response.raiMediaFilteredCount;
-    if(rai) return {status:"moderation_blocked", error:"RAI filtered count="+rai+" "+JSON.stringify(st.response.raiMediaFilteredReasons||[])};
-    return {status:"failed", error:"回應無影片:"+JSON.stringify(st.response||{}).slice(0,200)};
-  }
+async function compactFirstFrame(dataUrl){
+  const source=dataUrlParts(dataUrl);
+  if(!source) return null;
+  if(source.data.length<=170000 && ["image/jpeg","image/png"].includes(source.mimeType)) return source;
+  const img=new Image();
+  await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(new Error("首幀圖片無法讀取"));img.src=dataUrl;});
+  const maxW=640,maxH=1138,scale=Math.min(1,maxW/(img.naturalWidth||maxW),maxH/(img.naturalHeight||maxH));
+  const canvas=document.createElement("canvas");
+  canvas.width=Math.max(2,Math.round((img.naturalWidth||maxW)*scale));
+  canvas.height=Math.max(2,Math.round((img.naturalHeight||maxH)*scale));
+  canvas.getContext("2d",{alpha:false}).drawImage(img,0,0,canvas.width,canvas.height);
+  let quality=.82,encoded;
+  do{encoded=dataUrlParts(canvas.toDataURL("image/jpeg",quality));quality-=.1;}while(encoded&&encoded.data.length>170000&&quality>=.42);
+  if(!encoded||encoded.data.length>220000) throw new Error("首幀圖片過大，請改用較小的圖片");
+  return encoded;
 }
 
-async function veoCreateWithDowngrade(){ throw new Error("付費生成已暫停：不會自動重送任何建立任務請求"); }
+async function veoCreateWithDowngrade(shot,firstFrameDataUrl,opts={}){
+  if(!window.IRIS_SUPABASE) throw new Error("影片服務尚未連線");
+  const firstFrame=firstFrameDataUrl?await compactFirstFrame(firstFrameDataUrl):null;
+  const key=state.videoJobKeys[shot.id]||(state.videoJobKeys[shot.id]=window.IRIS_SUPABASE.newIdempotencyKey());
+  const reply=await window.IRIS_SUPABASE.invoke("video-job",{
+    idempotencyKey:key,
+    body:{action:"submit",input:{
+      kind:"final",round:1,segmentIndex:Math.max(0,Number(shot.id||1)-1),
+      prompt:fullPrompt(shot),duration:[4,6,8].includes(Number(shot.dur))?Number(shot.dur):4,
+      resolution:"720p",aspectRatio:"9:16",generateAudio:opts.audioParam===true,
+      ...(firstFrame?{firstFrame}:{}),
+    }},
+  });
+  if(reply.pending||reply.job?.status==="reserved") throw new Error(reply.message||"影片生成尚未由管理端啟用，本次未送出也未計費");
+  const jobId=reply.job?.jobId;
+  if(!jobId) throw new Error("影片工作未建立");
+  state.videoJobs[shot.id]=jobId;
+  return jobId;
+}
+
+async function veoPoll(jobId){
+  const t0=Date.now();let interval=6000;
+  while(true){
+    if((Date.now()-t0)/1000>900) return {status:"failed",error:"生成超過 15 分鐘，工作已保留，可稍後續查"};
+    let status;
+    try{
+      status=await window.IRIS_SUPABASE.invoke("video-job",{
+        idempotencyKey:window.IRIS_SUPABASE.newIdempotencyKey(),
+        body:{action:"status",input:{jobId}},
+      });
+    }catch(e){
+      if(e.code==="AUTH_REQUIRED") return {status:"failed",error:"登入已逾時，請重新登入後續查"};
+      glog("  狀態查詢暫時失敗，稍後再查："+e.message);
+      await new Promise(r=>setTimeout(r,interval));interval=Math.min(interval*1.35,20000);continue;
+    }
+    const jobStatus=status.job?.status;
+    if(["failed","refunded","cancelled"].includes(jobStatus)){
+      return {status:status.job?.failureKind==="content"?"moderation_blocked":"failed",error:jobStatus};
+    }
+    if(status.readyToCollect||jobStatus==="succeeded"){
+      const collected=await window.IRIS_SUPABASE.invoke("video-job",{
+        idempotencyKey:window.IRIS_SUPABASE.newIdempotencyKey(),
+        body:{action:"collect",input:{jobId}},
+      });
+      const url=collected.download?.url;
+      if(!url){
+        if(collected.job?.status==="failed"||collected.job?.status==="refunded") return {status:"failed",error:collected.job.status};
+        await new Promise(r=>setTimeout(r,interval));continue;
+      }
+      const response=await fetch(url,{cache:"no-store"});
+      if(!response.ok) return {status:"failed",error:"成品下載失敗 HTTP "+response.status};
+      return {status:"succeeded",blob:await response.blob()};
+    }
+    glog(`  生成中，已等 ${Math.round((Date.now()-t0)/1000)} 秒`);
+    await new Promise(r=>setTimeout(r,interval));interval=Math.min(interval*1.35,20000);
+  }
+}
 
 const TTS_VOICES = { female:"cmn-TW-Wavenet-A", male:"cmn-TW-Wavenet-B" };
 const TTS_RATE = { energetic:1.15, warm:1.0, calm:0.92 };
@@ -6324,34 +6410,73 @@ async function runTts(){
 $("#btn-gen-abort").addEventListener("click",()=>{ state.genAbort = true; glog("⚠ 已要求中止,當前鏡完成後停止。"); });
 async function runQueue(){
   if(state.genRunning) return;
-  const engineMode = ($("#cfg-engine")?.value || "minimax");
-  if(engineMode === "minimax") return runQueueH3(); // 兩段式一鏡到底(實拍段免生成;AI 段受 SECURITY_LOCKED 管制)
   state.genRunning = true; state.genAbort = false;
   $("#gen-log").textContent = "";
   const shots = state.project.shots;
   const prog = $("#gen-progress");
-  glog(`開始:${shots.length} 鏡 × 4s,模型 ${$("#cfg-veo-model").value}`);
+  const mid = Math.ceil(shots.length/2);
+  const groups = [shots.slice(0,mid),shots.slice(mid)].filter(group=>group.length);
+  const mixedMode = groups.some((_,idx)=>{
+    const source=(state.segSource||[])[idx];
+    return source!==undefined&&source!=="ai";
+  });
+  state.segMedia = mixedMode ? [] : null;
+  const completedByClip = new Set();
+  const handledClipSegments = new Set();
+  let segmentStart = 0;
+  const appendSegment=(media,shotIds,duration,extra={})=>{
+    if(!mixedMode||!media?.el) return;
+    const useDur=Math.max(.1,Number(duration)||4);
+    state.segMedia.push({start:segmentStart,dur:useDur,useDur,el:media.el,url:media.url,tainted:false,shotIds,...extra});
+    segmentStart+=useDur;
+  };
+  glog(`開始：${shots.length} 鏡，透過伺服器安全生成（每鏡 4／6／8 秒）`);
+  if(mixedMode) glog("混剪模式：已授權實拍段只在本機使用；其餘鏡頭才送入安全生成工作。");
   await runTts();
-  let refImgs = null;
-  if($("#opt-refimgs").checked){
-    const ids = Object.keys(state.frames);
-    if(ids.length){ refImgs = [state.frames[shots[0].id], state.frames[shots[Math.floor(shots.length/2)].id]].filter(Boolean).slice(0,2); }
-    if(!refImgs || !refImgs.length){ refImgs = null; glog("(無首幀圖可作參考圖,略過 referenceImages)"); }
-  }
   let chainFrame = null;
   const failed = [];
   for(let i=0;i<shots.length;i++){
     const s = shots[i];
     if(state.genAbort){ glog("■ 已中止。"); break; }
-    if(state.media[s.id]){ glog(`鏡 ${s.id}:已有影片,跳過`); continue; }
-    const firstFrame = ($("#opt-chain").checked && chainFrame) ? chainFrame : (state.frames[s.id]||null);
-    glog(`鏡 ${s.id}/${shots.length}:送出(${firstFrame? (chainFrame&&firstFrame===chainFrame?"首幀接力":"storyboard 首幀") : "純文字"}${refImgs?" + 參考圖":""})…`);
+    const segIndex=i<mid?0:1;
+    const group=groups[segIndex]||[s];
+    const source=(state.segSource||[])[segIndex];
+    if(mixedMode&&source!==undefined&&source!=="ai"){
+      if(handledClipSegments.has(segIndex)){prog.value=Math.round(((i+1)/shots.length)*100);continue;}
+      const clip=(state.userClips||[])[Number(source)];
+      if(!clip||!clip.authorized){
+        failed.push({id:s.id,why:"unauthorized_clip_blocked"});
+        glog(`✗ 段 ${segIndex+1} 中止：實拍片段未確認授權，未上傳也未合成。`);
+        logUsage({engine:"user-clip",resolution:"n/a",seconds:0,success:false,note:"unauthorized_clip_blocked"});
+        break;
+      }
+      const el=document.createElement("video");
+      el.playsInline=true;el.setAttribute("playsinline","");el.preload="auto";el.src=clip.url;el.muted=false;
+      try{el.load();}catch(e){}
+      const groupDur=group.reduce((sum,item)=>sum+item.dur,0);
+      const useDur=Math.min(Number(clip.dur)||groupDur,groupDur);
+      appendSegment({el,url:clip.url},group.map(item=>item.id),useDur,{isUserClip:true});
+      group.forEach(item=>completedByClip.add(item.id));
+      handledClipSegments.add(segIndex);
+      glog(`段 ${segIndex+1}：使用已授權實拍片段「${clip.name}」（不呼叫生成服務、不離開此裝置）`);
+      prog.value=Math.round(((i+1)/shots.length)*100);
+      continue;
+    }
+    if(state.media[s.id]){
+      glog(`鏡 ${s.id}:已有影片,跳過`);
+      appendSegment(state.media[s.id],[s.id],s.dur,{jobId:state.videoJobs[s.id]||null});
+      prog.value=Math.round(((i+1)/shots.length)*100);
+      continue;
+    }
+    const firstFrame = ($("#opt-chain").checked && chainFrame) ? chainFrame : ($("#opt-refimgs").checked?(state.frames[s.id]||null):null);
+    glog(`鏡 ${s.id}/${shots.length}:送出(${firstFrame? (chainFrame&&firstFrame===chainFrame?"首幀接力":"分鏡首幀") : "純文字"})…`);
     try{
-      const opts = { audioParam: $("#opt-audio-param").checked, refImgs };
+      const opts = { audioParam: $("#opt-audio-param").checked };
       const opName = await veoCreateWithDowngrade(s, firstFrame, opts);
       const r = await veoPoll(opName);
       if(r.status==="succeeded"){
         setMedia(s.id, URL.createObjectURL(r.blob));
+        appendSegment(state.media[s.id],[s.id],s.dur,{jobId:opName});
         glog(`  ✓ 鏡 ${s.id} 完成`);
         if($("#opt-chain").checked){
           try{ chainFrame = await extractLastFrame(state.media[s.id].el); }
@@ -6369,15 +6494,15 @@ async function runQueue(){
     }catch(e){
       failed.push({id:s.id, why:e.message});
       glog(`  ✗ 鏡 ${s.id} 建立任務失敗:${e.message}`);
-      if(/Token 無效或過期/.test(e.message)){ glog("■ Token 過期,隊列停止。換新 token 後回步驟 4 重按「審核通過」會從缺的鏡頭續跑。"); break; }
+      if(/登入|AUTH_REQUIRED|逾時/.test(e.message)){ glog("■ 登入狀態已逾時，隊列停止。重新登入後再按「審核通過」，已完成鏡頭不會重作。"); break; }
       chainFrame = null;
     }
     prog.value = Math.round(((i+1)/shots.length)*100);
   }
   state.genRunning = false;
-  const done = shots.filter(s=>state.media[s.id]).length;
+  const done = shots.filter(s=>state.media[s.id]||completedByClip.has(s.id)).length;
   glog(`━━ 隊列結束:${done}/${shots.length} 鏡完成${failed.length? ",失敗清單:"+failed.map(f=>`鏡${f.id}(${f.why.slice(0,40)})`).join("、") : ""}`);
-  if(!failed.length && done===shots.length) recordMockDeliveryEvent("completed",1,"mock-veo-"+Date.now());
+  if(!failed.length && done===shots.length) recordMockDeliveryEvent("completed",1,"video-job-"+Date.now());
   if(failed.length) glog("→ 缺鏡處理:回步驟 4 重按「審核通過」只補生缺的鏡頭(已完成的不會重作),或該鏡改用首幀靜圖運鏡頂替。");
   glog("→ 前往第 8 步：正式生成與交付。⚠ 影片只在瀏覽器記憶體,關頁即消失,請儘快匯出!");
   gotoStep(8);
@@ -6392,11 +6517,12 @@ function shotAt(t){
   const segs = state.segMedia||[];
   if(segs.length){
     const shots = state.project.shots;
-    const mid = Math.ceil(shots.length/2);
-    const groups = [shots.slice(0,mid), shots.slice(mid)].filter(g=>g.length);
     let segIdx = segs.findIndex(s=>t >= s.start && t < s.start + (s.useDur||s.dur));
     if(segIdx < 0) segIdx = segs.length-1;
-    const seg = segs[segIdx], grp = groups[segIdx] || groups[groups.length-1];
+    const seg = segs[segIdx];
+    const grp = Array.isArray(seg.shotIds)&&seg.shotIds.length
+      ? seg.shotIds.map(id=>shots.find(shot=>String(shot.id)===String(id))).filter(Boolean)
+      : [shots[Math.min(segIdx,shots.length-1)]];
     const local = Math.min(Math.max(t - seg.start, 0), (seg.useDur||seg.dur));
     const grpDur = grp.reduce((a,s)=>a+s.dur,0);
     const scaled = local * (grpDur / Math.max(seg.useDur||seg.dur, 0.001));
@@ -7343,284 +7469,9 @@ $("#bk-rec-play").addEventListener("click",playVoiceSample);
 $("#btn-material-voice-play").addEventListener("click",playVoiceSample);
 $("#bk-rec-clear").addEventListener("click",deleteVoiceSample);
 
-function h3ApiUrl(){
-  const url=window.IRIS_SUPABASE.functionUrl("video-job");
-  if(!url) throw new Error("SECURITY_LOCKED: Supabase video job function is not configured");
-  return url;
-}
-function h3SegmentPrompt(list, segIndex, totalSegs){
-  const anchor = state.project?.anchor || "";
-  let t = 0;
-  const hasVO = (state.project?.shots||[]).some(s=>String(s.voiceover||"").trim());
-  const shotLines = list.map(s=>{
-    const speech = String(s.voiceover||"").trim();
-    const line = hasVO
-      ? `[${fmtTs(t)}-${fmtTs(t+s.dur)}] 畫面:${s.action_prompt}。${speech? `人物對鏡頭說(台灣口音、自然口語、像老闆本人):「${speech}」` : "本鏡無人說話。"}`
-      : `[${fmtTs(t)}-${fmtTs(t+s.dur)}] 畫面:${s.action_prompt}`;
-    t += s.dur;
-    return line;
-  }).join("\n");
-  const refNote = (state.brandAssetUrls||state.brandAssets||[]).length
-    ? "\n【場地鎖定】附上的參考圖是這家店的真實場地:畫面必須重現參考圖中的空間格局、器材陳設、牆面材質與燈光色調,人物就在這個空間裡活動。不要自行想像別的場景。"
-    : "";
-  const sd = (state.project?.audio?.sound_design||"").trim();
-  const voiceNote = !hasVO
-    ? `【純視覺模式・務必遵守】全片沒有任何人聲、旁白、對白或歌詞,畫面中不出現任何人物、人臉、人手或人影。聲音設計:${sd || "低頻環境音與音效,搭配氣氛配樂"}。`
-    : (state.voiceSample
-        ? "人物說話的聲線、音色、語氣完全模仿參考音檔(reference audio),但講的內容依上面各段指定的台詞。"
-        : "人物用自然、有生活感的台灣口音講話,不要播音腔。");
-  const contNote = segIndex>0
-    ? "【身分鐵律】參考影片(reference video)是同一支片的上一段,用它鎖定身分與質感:**同一個人、同一件衣服(顏色款式完全相同)、同一種光線色溫、同一種畫質手感**。但本段是「剪接後的新鏡頭」——開頭直接以本段第一鏡指定的新機位/景別乾脆開場,人物已就位、動作已開始,**不要**複製參考影片最後一幀的位置與姿勢,不要做任何承接動作。嚴禁換人、換衣服、換時間、換打光。"
-    : "";
-  const seamNote = (segIndex < totalSegs-1)
-    ? "\n【段尾收束・務必遵守】本段結尾就是一個剪接點:最後一句台詞必須在本段結束前約 0.5 秒完整講完(句號收尾),最後一鏡以收束動作定住(放下手/看向成品/微點頭),不要淡出、不要開啟新動作、更不要把話講到一半——講一半被切斷就是失敗。"
-    : "";
-  const isFinalSeg = segIndex === totalSegs-1;
-  const payoffNote = isFinalSeg
-    ? "\n【收尾留白・務必遵守】本段是全片最後一段:最後一句台詞必須在影片結束前 1 秒講完,結尾留 1 秒不說話的畫面(人物微笑/點頭/看向鏡頭即可)。禁止把話講到最後一幀,否則成片會像被切斷。\n【結尾反差要求】最後 4 秒必須是全片的視覺 payoff:與開場同一機位、同一構圖,但畫面已從『雜亂/老舊/失敗』徹底轉為『乾淨/嶄新/成功』,反差要一眼可辨(乾淨明亮、雜物清空、光線變好、主角表情由沮喪轉為自信)。招牌與看板一律保持【全空白素面】,不要有任何字或圖案。"
-    : "";
-  return `${anchor}\n\n這是一支 ${totalSegs} 段式直式短影音的第 ${segIndex+1} 段,共 ${t} 秒。逐段指示:\n${shotLines}\n${refNote}\n${voiceNote}\n${contNote}${seamNote}${payoffNote}\n【鏡頭紀律】各鏡句首的運鏡標記(如【推近】【跟拍】【固定鏡頭】)請精準執行:每鏡一個主要運鏡、一個主要動作,鏡與鏡之間直接硬切、不加淡入淡出;附有首幀參考圖時,外觀以圖為準,提示詞專注於動作與運鏡的執行。\n【鐵律】畫面中絕對不可出現任何文字、字母、數字、Logo、店名、菜單字、海報字、招牌字——模型無法正確生成中文,一律留白,文字由後製字幕層疊加。手持感、寫實、UGC 風格。`;
-}
-function fmtTs(sec){ return "00:" + String(sec).padStart(2,"0"); }
-async function proxyDownload(url){
-  let resp = await fetch(h3ApiUrl() + "?dl=" + encodeURIComponent(url));
-  if(resp.ok) return await resp.blob();
-  if(resp.status !== 413) throw new Error("proxy HTTP " + resp.status);
-  const parts = [];
-  const CHUNK = 4*1024*1024;
-  let startByte = 0;
-  for(let i=0; i<60; i++){
-    const r = await fetch(h3ApiUrl() + "?dl=" + encodeURIComponent(url), {
-      headers: { Range: `bytes=${startByte}-${startByte+CHUNK-1}` }
-    });
-    if(!(r.ok || r.status===206)) throw new Error("chunk HTTP " + r.status);
-    const b = await r.arrayBuffer();
-    if(!b.byteLength) break;
-    parts.push(b);
-    startByte += b.byteLength;
-    const cr = r.headers.get("Content-Range");
-    const total = cr ? parseInt(cr.split("/")[1], 10) : NaN;
-    if(!isNaN(total) && startByte >= total) break;
-    if(b.byteLength < CHUNK) break;
-  }
-  if(!parts.length) throw new Error("empty download");
-  return new Blob(parts, {type:"video/mp4"});
-}
-async function dataUrlToPublicUrl(){ throw new Error("商家素材雲端上傳已暫停：等待私人儲存、保存期限與刪除機制"); }
-async function h3Create(){ const error = new Error("影片生成已暫停：等待伺服器端 job store、交付 ledger 與用量保護"); error.statusUnknown = false; throw error; }
-async function h3Poll(taskId){
-  const t0 = Date.now();
-  let interval = 10000;
-  while(true){
-    if((Date.now()-t0)/1000 > 900) return {status:"failed", error:"逾時 15 分鐘(task 保留:"+taskId+")"};
-    await new Promise(r=>setTimeout(r, interval));
-    interval = Math.min(interval*1.3, 20000);
-    let data;
-    try{
-      const resp = await fetch(h3ApiUrl() + "?id=" + encodeURIComponent(taskId));
-      data = await resp.json();
-    }catch(e){ glog("  輪詢錯誤(續):"+e.message); continue; }
-    const task = data.task || data;
-    if(task.status==="succeeded") return {status:"succeeded", url: task.content?.url, usage: task.usage};
-    if(task.status==="failed" || task.status==="cancelled"){
-      const msg = task.error?.message || task.status;
-      return {status: /sensitive/i.test(msg) ? "moderation_blocked" : "failed", error: msg};
-    }
-    glog(`  ${task.status||"…"} 已等 ${Math.round((Date.now()-t0)/1000)}s`);
-  }
-}
-async function runQueueH3(){
-  state.genRunning = true; state.genAbort = false;
-  $("#gen-log").textContent = "";
-  const shots = state.project.shots;
-  const mid = Math.ceil(shots.length/2);
-  const segLists = [shots.slice(0,mid), shots.slice(mid)].filter(l=>l.length);
-  const allUserClips = segLists.every((_,i)=>{ const v=(state.segSource||[])[i]; return v!==undefined && v!=="ai"; });
-  glog(allUserClips ? "全片使用實拍片段混剪" : `正式影片段落：${segLists.map(l=>l.reduce((a,s)=>a+s.dur,0)+"s").join(" + ")}；僅在客戶確認草稿並通過 final gate 後製作`);
-  glog(`參考素材:${state.brandAssets.length} 張商家圖${state.voiceSample? " + 老闆聲線樣本(6s)":""}`);
-  try{
-    if(state.voiceSample && !state.voiceSampleUrl){
-      glog("  上傳聲線樣本到雲端…");
-      state.voiceSampleUrl = await dataUrlToPublicUrl(state.voiceSample, "wav", "audio/wav");
-    }
-    if(state.brandAssets.length && !state.brandAssetUrls){
-      glog(`  上傳 ${state.brandAssets.length} 張商家圖到雲端…`);
-      state.brandAssetUrls = [];
-      for(const a of state.brandAssets) state.brandAssetUrls.push(await dataUrlToPublicUrl(typeof a==="string"?a:a.url, "png", "image/png"));
-    }
-  }catch(e){
-    glog("  ⚠ 素材上雲失敗(" + e.message + "),改用內嵌傳送(手機可能較不穩)");
-  }
-  $("#vol-native").value = 100; $("#vol-vo").value = 0;
-  if(!Array.isArray(state.segMedia)) state.segMedia = [];
-  const doneCount = state.segMedia.length; // resume: keep finished segments
-  let prevUrl = doneCount ? state.segMedia[doneCount-1].url : null;
-  let startAcc = state.segMedia.reduce((a,s)=>a+(s.useDur||s.dur),0); // 對齊時間軸:已完成段以修剪後長度累計,切點才會落在規劃的段界上
-  if(doneCount) glog(`(續跑:已完成 ${doneCount} 段,從段 ${doneCount+1} 繼續)`);
-  const prog = $("#gen-progress");
-  for(let i=doneCount;i<segLists.length;i++){
-    if(state.genAbort){ glog("■ 已中止。"); break; }
-    const list = segLists[i];
-    let dur = list.reduce((a,s)=>a+s.dur,0);
-    if(dur > 15){ // H3 單段上限 15s:縮短該段最後一鏡,字幕時間軸同步
-      const over = dur - 15;
-      const lastShot = list[list.length-1];
-      lastShot.dur = Math.max(2, lastShot.dur - over);
-      dur = list.reduce((a,s)=>a+s.dur,0);
-      syncScrub();
-      glog(`(段 ${i+1} 超過 15s 上限,末鏡自動縮短 ${over}s)`);
-    }
-    const srcSel = (state.segSource||[])[i];
-    if(srcSel !== undefined && srcSel !== "ai"){
-      const clip = (state.userClips||[])[Number(srcSel)];
-      if(clip && !clip.authorized){
-        glog(`✗ 段 ${i+1} 中止:實拍片段「${clip.name}」未確認授權。請在步驟 1 勾選「已取得授權」後重試。`);
-        state.segSource[i] = "ai"; refreshSegSourceUI();
-        logUsage({ engine:"user-clip", resolution:"n/a", seconds:0, success:false, note:"unauthorized_clip_blocked" });
-        break;
-      }
-      if(clip){
-        glog(`段 ${i+1}/${segLists.length}:使用實拍片段「${clip.name}」(已確認授權,不呼叫生成服務)`);
-        const el = document.createElement("video");
-        el.playsInline = true; el.setAttribute("playsinline",""); el.preload = "auto";
-        el.src = clip.url; el.muted = false;
-        try{ el.load(); }catch(e){}
-        const useDur = Math.min(clip.dur || dur, dur);
-        const segObj = { start:startAcc, dur:useDur, useDur, el, url:clip.url, taskId:null, tainted:false, isUserClip:true };
-        state.segMedia.push(segObj);
-        startAcc += useDur;
-        prevUrl = null;
-        if(i < segLists.length-1){
-          glog("  SECURITY_LOCKED:實拍→AI 延續參考需私人儲存與短效簽章網址,尚未啟用;下一段不使用延續參考,客戶素材不會離開此裝置。");
-        }
-        prog.value = Math.round(((i+1)/segLists.length)*100);
-        continue;
-      }
-      glog(`  ⚠ 段 ${i+1} 指定的實拍片段已不存在,改用 AI 生成`);
-    }
-    glog(`段 ${i+1}/${segLists.length}(${dur}s):送出…`);
-    const content = [{ type:"text", text: h3SegmentPrompt(list, i, segLists.length) }];
-    for(const img of (state.brandAssetUrls || state.brandAssets)) content.push({ type:"image_url", image_url:{url:typeof img==="string"?img:img.url}, role:"reference_image" });
-    if(prevUrl) content.push({ type:"video_url", video_url:{url:prevUrl}, role:"reference_video" });
-    const voiceRef = state.voiceSampleUrl || state.voiceSample;
-    if(voiceRef) content.push({ type:"audio_url", audio_url:{url:voiceRef}, role:"reference_audio" });
-    const segFrame = state.frames[list[0]?.id];
-    if(segFrame){
-      content.push({ type:"image_url", image_url:{url:segFrame}, role:"reference_image" });
-      content.push({ type:"text", text:"【首幀鎖定】最後一張附圖是本段第一鏡已定稿的分鏡示意圖:人物長相、服裝、場地、光線必須與它完全一致,開場畫面盡量重現該構圖。" });
-      glog(`  已附本段首幀示意圖(鏡 ${list[0].id}),影片將沿用定稿畫面`);
-    }
-    try{
-      const taskId = await h3Create(content, dur);
-      glog(`  任務 ${taskId},生成中(通常 2-8 分鐘)…`);
-      const r = await h3Poll(taskId);
-      if(r.status!=="succeeded"){
-        if(r.status==="moderation_blocked") glog(`  ⚠ 段 ${i+1} moderation_blocked:${r.error}。不自動重試,回報主理人。`);
-        else glog(`  ✗ 段 ${i+1} 失敗:${r.error}(不自動重試)`);
-        break;
-      }
-      glog(`  ✓ 段 ${i+1} 完成,下載中(自動分塊,任何大小都能抓)…`);
-      let el, localUrl = r.url, tainted = true;
-      try{
-        const blob = await proxyDownload(r.url);
-        localUrl = URL.createObjectURL(blob); tainted = false;
-        glog(`  ✓ 段 ${i+1} 已下載進記憶體(${(blob.size/1048576).toFixed(1)}MB)`);
-      }catch(e){ glog(`  ⚠ 自動下載失敗(${e.message}),改串流播放;步驟 6「段回填」可補救`); }
-      el = document.createElement("video");
-      el.playsInline = true; el.setAttribute("playsinline",""); el.setAttribute("webkit-playsinline","");
-      el.preload = "auto"; el.crossOrigin = "anonymous";
-      el.src = localUrl; el.muted = false; // H3 原生人聲在影片內,預覽不靜音
-      try{ el.load(); }catch(e){}  // iOS 必須顯式 load(),否則 readyState 永遠 0 → 預覽黑屏
-      const segObj = { start:startAcc, dur, el, url:r.url, taskId, tainted };
-      el.onerror = ()=>{ // 連結過期/載入失敗 = 黑屏元兇 → 標記並引導回填
-        segObj.tainted = true;
-        glog(`⚠ 段 ${state.segMedia.indexOf(segObj)+1} 影片載入失敗(連結可能已過期)。到步驟 6「段回填」按「⚡ 自動修復」。`);
-        renderSegFix();
-      };
-      state.segMedia.push(segObj);
-      segObj.playFrom = 0;
-      prevUrl = r.url;
-      const isLastSegNow = (i === segLists.length-1);
-      segObj.useDur = isLastSegNow ? dur : Math.max(2, dur - SEAM_TRIM);
-      startAcc += segObj.useDur;
-      prog.value = Math.round(((i+1)/segLists.length)*100);
-    }catch(e){
-      if(e.noBalance){ glog("✗ 影片服務目前不可用；本次不計校稿輪次，也不扣正式影片。請聯絡 IRIS 支援後再手動決定是否續跑。"); }
-      else glog(`✗ 段 ${i+1} 建立失敗:${e.message}${e.moderation? "(moderation_blocked)":""}`);
-      break;
-    }
-  }
-  state.genRunning = false;
-  renderSegFix();
-  if(state.segMedia.length === segLists.length){
-    recordMockDeliveryEvent("completed",1,"mock-h3-"+Date.now());
-    glog("━━ 全片生成完成(原生人聲+對口型已內含)。前往步驟 6 預覽匯出。⚠ 影片在記憶體,儘快匯出!");
-    syncScrub(); gotoStep(8);
-  }else{
-    glog("━━ 未全部完成。排除問題後回步驟 4 重按「審核通過」,已完成的段會保留。");
-  }
-}
 function renderSegFix(){
-  const bad = (state.segMedia||[]).filter(s=>s.tainted || (s.el && s.el.readyState < 2 && (s._tries||0) >= 6));
-  const card = $("#seg-fix-card");
-  if(!bad.length){ card.classList.add("hidden"); return; }
-  card.classList.remove("hidden");
-  const box = $("#seg-fix");
-  box.innerHTML = "";
-  bad.forEach((seg,idx)=>{
-    const row = document.createElement("div");
-    row.className = "row";
-    row.style.marginTop = "6px";
-    row.innerHTML = `<span>段 ${state.segMedia.indexOf(seg)+1}(${seg.dur}s)</span>
-      <button class="btn small teal" data-auto>⚡ 自動修復</button>
-      <button class="btn small ghost" data-reload>↻ 重新載入</button>
-      <button class="btn small" data-relink>🔄 重新取連結</button>
-      <a class="btn small ghost" style="text-decoration:none" href="${escapeHtml(seg.url)}" target="_blank" download>⬇ 手動下載</a>
-      <input type="file" accept="video/mp4" data-fix="${idx}">
-      <span class="status-line" data-st></span>`;
-    const st = row.querySelector("[data-st]");
-    async function freshUrl(){
-      const resp = await fetch(h3ApiUrl() + "?id=" + encodeURIComponent(seg.taskId||""));
-      const data = await resp.json();
-      const u = data.task && data.task.content && data.task.content.url;
-      if(!u) throw new Error("查無新連結(任務超過 7 天?)");
-      seg.url = u;
-      row.querySelector("a").href = u;
-      return u;
-    }
-    row.querySelector("[data-auto]").addEventListener("click", async ()=>{
-      st.textContent = "修復中(換發連結+分塊下載)…"; st.className = "status-line run";
-      try{
-        try{ await freshUrl(); }catch(e){}
-        const blob = await proxyDownload(seg.url);
-        seg.el.src = URL.createObjectURL(blob);
-        seg.tainted = false;
-        st.textContent = "✓ 已修復,可預覽與匯出"; st.className = "status-line ok";
-        renderSegFix();
-      }catch(e){ st.textContent = "✗ " + e.message + "(改用手動下載→選擇檔案傳回)"; st.className = "status-line err"; }
-    });
-    row.querySelector("[data-reload]").addEventListener("click", ()=>{
-      seg._tries = 0;
-      try{ seg.el.load(); seg.el.play().then(()=>seg.el.pause()).catch(()=>{}); }catch(e){}
-      st.textContent = "已要求重新解碼(手機請保持此分頁在前景)"; st.className = "status-line run";
-    });
-    row.querySelector("[data-relink]").addEventListener("click", async ()=>{
-      st.textContent = "取新連結…"; st.className = "status-line run";
-      try{
-        const u = await freshUrl();
-        seg.el.src = u;
-        st.textContent = "✓ 連結已更新(串流播放;要匯出請再按自動修復)"; st.className = "status-line ok";
-      }catch(e){ st.textContent = "✗ " + e.message; st.className = "status-line err"; }
-    });
-    row.querySelector("input").addEventListener("change",(e)=>{
-      const f = e.target.files[0];
-      if(!f) return;
-      seg.el.src = URL.createObjectURL(f);
-      seg.tainted = false;
-      renderSegFix();
-    });
-    box.appendChild(row);
-  });
+  const card=$("#seg-fix-card");
+  if(card) card.classList.add("hidden");
 }
 
 const SEASON_KWS = {
@@ -8087,7 +7938,8 @@ async function generateFromIdea(feedback){
     const topicNow = ($("#topic-kw")?.value||"").trim();
     if(topicNow) p.meta = Object.assign({}, p.meta, {topic: topicNow});
     state.project = p;
-    state.media = {}; state.frames = {}; state.voClips = {}; state.segMedia = null; state.approved = false;
+    state.media = {}; state.frames = {}; state.voClips = {}; state.segMedia = null;
+    state.videoJobs = {}; state.videoJobKeys = {}; state.approved = false;
     state.burnCaptions = buildBurnCaptions();
     $("#script-json").value = JSON.stringify(p, null, 2);
     $("#idea-refine").classList.remove("hidden");
@@ -11026,6 +10878,7 @@ renderTopicQuick();
 $("#btn-settings").addEventListener("click", ()=>$("#settings-modal-bg").classList.add("show"));
 $("#settings-close").addEventListener("click", ()=>$("#settings-modal-bg").classList.remove("show"));
 $("#settings-modal-bg").addEventListener("click", (e)=>{ if(e.target.id==="settings-modal-bg") e.target.classList.remove("show"); });
+$("#btn-export-project-csv").addEventListener("click",exportProjectDataCsv);
 renderStyles();
 initializeNeutralDraft();
 applyLocale(i18nInitialLocale());
@@ -11053,4 +10906,3 @@ document.dispatchEvent(new CustomEvent("iris:ready"));
 </script>
 </body>
 </html>
-
